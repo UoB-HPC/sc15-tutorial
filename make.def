@@ -8,6 +8,8 @@ LIBS        = -lm
 PRE         = ./
 
 CFLAGS	  = $(OPTFLAGS)
+OCL_LIBS 	= -framework OpenCL
+
 
 OBJ=o
 EXE=
