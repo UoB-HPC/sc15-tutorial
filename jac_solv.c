@@ -30,8 +30,8 @@
 **  HISTORY: Written by Tim Mattson, Oct 2015
 */
 
-#include<omp.h>
-#include<math.h>
+#include <omp.h>
+#include <math.h>
 #include "mm_utils.h"   //a library of basic matrix utilities functions
                         //and some key constants used in this program 
                         //(such as TYPE)
