@@ -7,7 +7,7 @@
 # verify that you are including the right make.def file for the platform
 include make.def
 
-EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) 
+EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) jac_solv_ocl_basic$(EXE)
 
 MM_OBJS  = mm_testbed.$(OBJ) mm_utils.$(OBJ) mm_ijk.$(OBJ) mm_tst_cases.$(OBJ)
 
@@ -19,6 +19,8 @@ GAUS_OBJS  = gauss_solv.$(OBJ) mm_utils.$(OBJ)
 
 JAC_OBJS  = jac_solv.$(OBJ) mm_utils.$(OBJ) 
 
+JAC_OCL_BASIC_OBJS  = jac_solv_ocl_basic.$(OBJ) mm_utils.$(OBJ) 
+
 all: $(EXES)
 
 stencil$(EXE): $(STN_OBJS) 
@@ -26,6 +28,9 @@ stencil$(EXE): $(STN_OBJS)
 
 jac_solv$(EXE): $(JAC_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv$(EXE) $(JAC_OBJS) $(LIBS)
+
+jac_solv_ocl_basic$(EXE): $(JAC_OCL_BASIC_OBJS) mm_utils.h
+	$(CLINKER) $(CFLAGS) -o jac_solv_ocl_basic$(EXE) $(JAC_OCL_BASIC_OBJS) $(LIBS) $(OCL_LIBS)
 
 gauss_solv$(EXE): $(GAUS_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o gauss_solv$(EXE) $(GAUS_OBJS) $(LIBS)
