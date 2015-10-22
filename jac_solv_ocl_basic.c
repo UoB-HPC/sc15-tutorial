@@ -20,14 +20,15 @@
 **
 **  USAGE:   Run wtihout arguments to use default SIZE.
 **
-**              ./jac_solv
+**              ./jac_solv_ocl_basic
 **
 **           Run with a single argument for the order of the A
 **           matrix ... for example
 **
-**              ./jac_solv 2500
+**              ./jac_solv_ocl_basic 2500
 **
 **  HISTORY: Written by Tim Mattson, Oct 2015
+**           Ported to OpenCL by Tom Deakin and James Price, Oct 2015
 */
 
 #include <omp.h>
@@ -50,10 +51,10 @@ int main(int argc, char **argv)
   int i,j, iters;
   double start_time, elapsed_time;
   TYPE conv, tmp, err, chksum;
-  TYPE *A, *b, *x1, *x2, *xnew, *xold, *xtmp; 
+  TYPE *A, *b, *x1, *x2, *xnew, *xold, *xtmp;
 
 // set matrix dimensions and allocate memory for matrices
-  if(argc == 2)
+  if (argc == 2)
   {
     Ndim = atoi(argv[1]);
   }
@@ -85,7 +86,7 @@ int main(int argc, char **argv)
 //
 // Initialize x and just give b some non-zero random values
 //
-  for(i=0; i<Ndim; i++)
+  for (i = 0; i < Ndim; i++)
   {
     x1[i] = (TYPE)0.0;
     x2[i] = (TYPE)0.0;
@@ -100,7 +101,7 @@ int main(int argc, char **argv)
   iters = 0;
   xnew  = x1;
   xold  = x2;
-  while((conv > TOLERANCE) && (iters<MAX_ITERS))
+  while ((conv > TOLERANCE) && (iters<MAX_ITERS))
   {
     iters++;
     xtmp  = xnew;   // don't copy arrays.
@@ -123,12 +124,13 @@ int main(int argc, char **argv)
     // test convergence
     //
     conv = 0.0;
-    for (i=0; i<Ndim; i++)
+    for (i = 0; i < Ndim; i++)
     {
       tmp  = xnew[i]-xold[i];
       conv += tmp*tmp;
     }
     conv = sqrt((double)conv);
+
 #ifdef DEBUG
     printf(" conv = %f \n",(float)conv);
 #endif
@@ -147,10 +149,10 @@ int main(int argc, char **argv)
   err    = (TYPE) 0.0;
   chksum = (TYPE) 0.0;
 
-  for(i=0; i<Ndim; i++)
+  for (i = 0; i < Ndim; i++)
   {
     xold[i] = (TYPE) 0.0;
-      for(j=0; j<Ndim; j++)
+      for (j = 0; j < Ndim; j++)
         xold[i] += A[i*Ndim+j]*xnew[j];
     tmp = xold[i] - b[i];
 #ifdef DEBUG
