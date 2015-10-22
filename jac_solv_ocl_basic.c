@@ -33,9 +33,16 @@
 
 #include <omp.h>
 #include <math.h>
+#include <string.h>
 #include "mm_utils.h"   //a library of basic matrix utilities functions
                         //and some key constants used in this program
                         //(such as TYPE)
+
+#ifdef __APPLE__
+  #include <OpenCL/cl.h>
+#else
+  #include <CL/cl.h>
+#endif
 
 #define TOLERANCE 0.001
 #define DEF_SIZE  1024
@@ -45,24 +52,25 @@
 //#define DEBUG    1     // output a small subset of intermediate values
 //#define VERBOSE  1
 
+static int Ndim = DEF_SIZE;           // A[Ndim][Ndim]
+
+static cl_uint device_index = 0;
+
+void parse_arguments(int argc, char *argv[]);
+void check_error(const cl_int err, const char *msg);
+
 int main(int argc, char **argv)
 {
-  int Ndim;           // A[Ndim][Ndim]
+
   int i,j, iters;
   double start_time, elapsed_time;
   TYPE conv, tmp, err, chksum;
   TYPE *A, *b, *x1, *x2, *xnew, *xold, *xtmp;
 
-// set matrix dimensions and allocate memory for matrices
-  if (argc == 2)
-  {
-    Ndim = atoi(argv[1]);
-  }
-  else
-  {
-    Ndim = DEF_SIZE;
-  }
 
+  parse_arguments(argc, argv);
+
+  // set matrix dimensions and allocate memory for matrices
   printf(" ndim = %d\n",Ndim);
 
   A    = (TYPE *) malloc(Ndim*Ndim*sizeof(TYPE));
@@ -91,7 +99,7 @@ int main(int argc, char **argv)
     x1[i] = (TYPE)0.0;
     x2[i] = (TYPE)0.0;
     b[i]  = (TYPE)(rand()%51)/100.0;
-   }
+  }
 
   start_time = omp_get_wtime();
 //
@@ -172,3 +180,122 @@ int main(int argc, char **argv)
   free(x1);
   free(x2);
 }
+
+void check_error(const cl_int err, const char *msg)
+{
+  if (err != CL_SUCCESS)
+  {
+    fprintf(stderr, "Error %d: %s\n", err, msg);
+    exit(EXIT_FAILURE);
+  }
+}
+
+
+#define MAX_PLATFORMS     8
+#define MAX_DEVICES      16
+#define MAX_INFO_STRING 256
+
+
+unsigned getDeviceList(cl_device_id devices[MAX_DEVICES])
+{
+  cl_int err;
+
+  // Get list of platforms
+  cl_uint numPlatforms = 0;
+  cl_platform_id platforms[MAX_PLATFORMS];
+  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &numPlatforms);
+  check_error(err, "getting platforms");
+
+  // Enumerate devices
+  unsigned numDevices = 0;
+  for (int i = 0; i < numPlatforms; i++)
+  {
+    cl_uint num = 0;
+    err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL,
+                         MAX_DEVICES-numDevices, devices+numDevices, &num);
+    check_error(err, "getting deviceS");
+    numDevices += num;
+  }
+
+  return numDevices;
+}
+
+void getDeviceName(cl_device_id device, char name[MAX_INFO_STRING])
+{
+  cl_device_info info = CL_DEVICE_NAME;
+  clGetDeviceInfo(device, info, MAX_INFO_STRING, name, NULL);
+}
+
+
+int parseUInt(const char *str, cl_uint *output)
+{
+  char *next;
+  *output = strtoul(str, &next, 10);
+  return !strlen(next);
+}
+
+
+
+void parse_arguments(int argc, char *argv[])
+{
+  for (int i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "--list"))
+    {
+      // Get list of devices
+      cl_device_id devices[MAX_DEVICES];
+      unsigned numDevices = getDeviceList(devices);
+
+      // Print device names
+      if (numDevices == 0)
+      {
+        printf("No devices found.\n");
+      }
+      else
+      {
+        printf("\n");
+        printf("Devices:\n");
+        for (int i = 0; i < numDevices; i++)
+        {
+          char name[MAX_INFO_STRING];
+          getDeviceName(devices[i], name);
+          printf("%2d: %s\n", i, name);
+        }
+        printf("\n");
+      }
+      exit(EXIT_SUCCESS);
+    }
+    else if (!strcmp(argv[i], "--device"))
+    {
+      if (++i >= argc || !parseUInt(argv[i], &device_index))
+      {
+        fprintf(stderr, "Invalid device index\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+    else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
+    {
+      printf("\n");
+      printf("Usage: ./jac_solv_ocl_basic [OPTIONS]\n\n");
+      printf("Options:\n");
+      printf("  -h    --help               Print the message\n");
+      printf("        --list               List available devices\n");
+      printf("        --device     INDEX   Select device at INDEX\n");
+      printf("  NDIM                       Set matrix dimensions to NDIM\n");
+      printf("\n");
+      exit(EXIT_SUCCESS);
+    }
+    else
+    {
+      // Try to parse NDIM
+      if (!parseUInt(argv[i], &Ndim))
+      {
+        printf("Invalid Ndim value\n");
+      }
+    }
+  }
+}
+
+
+
+
