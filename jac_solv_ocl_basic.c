@@ -52,7 +52,7 @@
 //#define DEBUG    1     // output a small subset of intermediate values
 //#define VERBOSE  1
 
-static int Ndim = DEF_SIZE;           // A[Ndim][Ndim]
+static cl_uint Ndim = DEF_SIZE;           // A[Ndim][Ndim]
 
 static cl_uint device_index = 0;
 
@@ -295,7 +295,3 @@ void parse_arguments(int argc, char *argv[])
     }
   }
 }
-
-
-
-
