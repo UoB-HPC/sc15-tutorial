@@ -1,0 +1,6 @@
+*.o
+cmass
+gauss_solv
+jac_solv
+mm_testbed
+stencil
