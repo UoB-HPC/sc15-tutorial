@@ -72,12 +72,9 @@ int main(int argc, char **argv)
   int i,j, iters;
   double start_time, elapsed_time;
   TYPE conv, tmp, err, chksum;
-  TYPE *A, *b, *x1, *x2, *xnew, *xold, *xtmp;
-
+  TYPE *A, *b, *x1, *x2, *xnew, *xold;
 
   parse_arguments(argc, argv);
-
-  char *kernel_string = get_kernel_string("jac_ocl_basic.cl");
 
   // set matrix dimensions and allocate memory for matrices
   printf(" ndim = %d\n",Ndim);
@@ -110,6 +107,98 @@ int main(int argc, char **argv)
     b[i]  = (TYPE)(rand()%51)/100.0;
   }
 
+
+  cl_int           clerr;
+  cl_device_id     device;                 // compute device id
+  cl_context       context;                // compute context
+  cl_command_queue commands;               // compute command queue
+  cl_program       program;                // compute program
+  cl_kernel        ko_jacobi;              // compute kernel
+  cl_mem           d_A, d_b, d_x1, d_x2;   // device memory objects
+
+
+  // Get list of OpenCL devices
+  cl_device_id devices[MAX_DEVICES];
+  unsigned num_devices = get_device_list(devices);
+
+  // Check device index in range
+  if (device_index >= num_devices)
+  {
+    printf("Invalid device index (try '--list')\n");
+    return 1;
+  }
+
+  device = devices[device_index];
+
+  // Print device name
+  char name[MAX_INFO_STRING];
+  clGetDeviceInfo(device, CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
+  printf("\nUsing OpenCL device: %s\n", name);
+
+
+  // Create a compute context
+  context = clCreateContext(0, 1, &device, NULL, NULL, &clerr);
+  check_error(clerr, "Creating context");
+
+  // Create a command queue
+  commands = clCreateCommandQueue(context, device, 0, &clerr);
+  check_error(clerr, "Creating command queue");
+
+  // Create the compute program from the source buffer
+  char *kernel_string = get_kernel_string("jac_ocl_basic.cl");
+  program = clCreateProgramWithSource(context, 1, (const char **)&kernel_string, NULL, &clerr);
+  check_error(clerr, "Creating program");
+
+  // Build the program
+  clerr = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+  if (clerr == CL_BUILD_PROGRAM_FAILURE)
+  {
+    size_t len;
+    char buffer[2048];
+
+    printf("OpenCL build log:\n");
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+    printf("%s\n", buffer);
+  }
+  check_error(clerr, "Building program");
+
+  // Create the compute kernel from the program
+  ko_jacobi = clCreateKernel(program, "jacobi", &clerr);
+  check_error(clerr, "Creating kernel");
+
+  // Create the input buffers in device memory
+  d_A  = clCreateBuffer(context, CL_MEM_READ_ONLY, Ndim*Ndim*sizeof(TYPE), NULL, &clerr);
+  check_error(clerr, "Creating buffer d_A");
+
+  d_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, Ndim*sizeof(TYPE), NULL, &clerr);
+  check_error(clerr, "Creating buffer d_b");
+
+  d_x1 = clCreateBuffer(context, CL_MEM_READ_WRITE, Ndim*sizeof(TYPE), NULL, &clerr);
+  check_error(clerr, "Creating buffer d_x1");
+
+  d_x2 = clCreateBuffer(context, CL_MEM_READ_WRITE, Ndim*sizeof(TYPE), NULL, &clerr);
+  check_error(clerr, "Creating buffer d_x2");
+
+  // Write initial values to buffers
+  clerr = clEnqueueWriteBuffer(commands, d_A, CL_TRUE, 0, Ndim*Ndim*sizeof(TYPE), A, 0, NULL, NULL);
+  check_error(clerr, "Copying A to device at d_A");
+
+  clerr = clEnqueueWriteBuffer(commands, d_b, CL_TRUE, 0, Ndim*sizeof(TYPE), b, 0, NULL, NULL);
+  check_error(clerr, "Copying b to device at d_b");
+
+  clerr = clEnqueueWriteBuffer(commands, d_x1, CL_TRUE, 0, Ndim*sizeof(TYPE), x1, 0, NULL, NULL);
+  check_error(clerr, "Copying x1 to device at d_x1");
+
+  clerr = clEnqueueWriteBuffer(commands, d_x2, CL_TRUE, 0, Ndim*sizeof(TYPE), x2, 0, NULL, NULL);
+  check_error(clerr, "Copying x2 to device at d_x2");
+
+  // Set the arguments to our compute kernel
+  clerr  = clSetKernelArg(ko_jacobi, 0, sizeof(cl_uint), &Ndim);
+  clerr |= clSetKernelArg(ko_jacobi, 1, sizeof(cl_mem), &d_A);
+  clerr |= clSetKernelArg(ko_jacobi, 2, sizeof(cl_mem), &d_b);
+  check_error(clerr, "Setting kernel arguments");
+
+
   start_time = omp_get_wtime();
 //
 // jacobi iterative solver
@@ -118,41 +207,54 @@ int main(int argc, char **argv)
   iters = 0;
   xnew  = x1;
   xold  = x2;
+  cl_mem d_xnew = d_x1;
+  cl_mem d_xold = d_x2;
   while ((conv > TOLERANCE) && (iters<MAX_ITERS))
   {
     iters++;
-    xtmp  = xnew;   // don't copy arrays.
-    xnew  = xold;   // just swap pointers.
-    xold  = xtmp;
+    cl_mem d_xtmp = d_xnew;
+    d_xnew = d_xold; // don't copy arrays.
+    d_xold = d_xtmp; // just swap pointers.
 
-    for (i=0; i<Ndim; i++)
-    {
-      xnew[i] = (TYPE) 0.0;
-      for (j=0; j<Ndim;j++)
-      {
-        if (i != j)
-          xnew[i]+= A[i*Ndim + j]*xold[j];
-      }
-        xnew[i] = (b[i]-xnew[i])/A[i*Ndim+i];
+    // Update the xold/xnew kernel arguments
+    clerr  = clSetKernelArg(ko_jacobi, 3, sizeof(cl_mem), &d_xold);
+    clerr |= clSetKernelArg(ko_jacobi, 4, sizeof(cl_mem), &d_xnew);
+    check_error(clerr, "Updating xold/xnew kernel arguments");
 
-    }
+    // Enqueue the kernel
+    size_t global[] = {Ndim};
+    clerr = clEnqueueNDRangeKernel(commands, ko_jacobi, 1, NULL, global, NULL, 0, NULL, NULL);
+    check_error(clerr, "Enqueueing kernel");
 
     //
     // test convergence
     //
-    conv = 0.0;
-    for (i = 0; i < Ndim; i++)
-    {
-      tmp  = xnew[i]-xold[i];
-      conv += tmp*tmp;
-    }
-    conv = sqrt((double)conv);
+    // TODO: Convergence testing in OpenCL
+    //conv = 0.0;
+    //for (i = 0; i < Ndim; i++)
+    //{
+    //  tmp  = xnew[i]-xold[i];
+    //  printf("tmp = %lf\n", tmp);
+    //  conv += tmp*tmp;
+    //}
+    //conv = sqrt((double)conv);
 
 #ifdef DEBUG
     printf(" conv = %f \n",(float)conv);
 #endif
 
   }
+
+  clerr = clFinish(commands);
+  check_error(clerr, "Running kernels");
+
+  // Read final results
+  clerr = clEnqueueReadBuffer(commands, d_xold, CL_TRUE, 0, Ndim*sizeof(TYPE), xold, 0, NULL, NULL);
+  check_error(clerr, "Reading final d_xold values");
+
+  clerr = clEnqueueReadBuffer(commands, d_xnew, CL_TRUE, 0, Ndim*sizeof(TYPE), xnew, 0, NULL, NULL);
+  check_error(clerr, "Reading final d_xnew values");
+
 
   elapsed_time = omp_get_wtime() - start_time;
   printf(" Convergence = %g with %d iterations and %f seconds\n",
@@ -188,6 +290,16 @@ int main(int argc, char **argv)
   free(b);
   free(x1);
   free(x2);
+
+  // Release OpenCL objects
+  clReleaseMemObject(d_A);
+  clReleaseMemObject(d_b);
+  clReleaseMemObject(d_x1);
+  clReleaseMemObject(d_x2);
+  clReleaseProgram(program);
+  clReleaseKernel(ko_jacobi);
+  clReleaseCommandQueue(commands);
+  clReleaseContext(context);
 }
 
 
@@ -311,6 +423,3 @@ char *get_kernel_string(const char *file_name)
   }
   return result;
 }
-
-
-

@@ -98,6 +98,7 @@ int main(int argc, char** argv)
     h_b[i] = rand() / (float)RAND_MAX;
   }
 
+  // Get list of OpenCL devices
   cl_device_id devices[MAX_DEVICES];
   unsigned num_devices = get_device_list(devices);
 
