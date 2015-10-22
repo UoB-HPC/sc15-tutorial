@@ -49,6 +49,10 @@
 #define MAX_ITERS 5000
 #define LARGE     1000000.0
 
+#define MAX_PLATFORMS     8
+#define MAX_DEVICES      16
+#define MAX_INFO_STRING 256
+
 //#define DEBUG    1     // output a small subset of intermediate values
 //#define VERBOSE  1
 
@@ -56,6 +60,7 @@ static cl_uint Ndim = DEF_SIZE;           // A[Ndim][Ndim]
 
 static cl_uint device_index = 0;
 
+unsigned get_device_list(cl_device_id devices[MAX_DEVICES]);
 void parse_arguments(int argc, char *argv[]);
 void check_error(const cl_int err, const char *msg);
 
@@ -181,6 +186,7 @@ int main(int argc, char **argv)
   free(x2);
 }
 
+
 void check_error(const cl_int err, const char *msg)
 {
   if (err != CL_SUCCESS)
@@ -190,51 +196,36 @@ void check_error(const cl_int err, const char *msg)
   }
 }
 
-
-#define MAX_PLATFORMS     8
-#define MAX_DEVICES      16
-#define MAX_INFO_STRING 256
-
-
-unsigned getDeviceList(cl_device_id devices[MAX_DEVICES])
+unsigned get_device_list(cl_device_id devices[MAX_DEVICES])
 {
   cl_int err;
 
   // Get list of platforms
-  cl_uint numPlatforms = 0;
+  cl_uint num_platforms = 0;
   cl_platform_id platforms[MAX_PLATFORMS];
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &numPlatforms);
+  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &num_platforms);
   check_error(err, "getting platforms");
 
   // Enumerate devices
-  unsigned numDevices = 0;
-  for (int i = 0; i < numPlatforms; i++)
+  unsigned num_devices = 0;
+  for (int i = 0; i < num_platforms; i++)
   {
     cl_uint num = 0;
     err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL,
-                         MAX_DEVICES-numDevices, devices+numDevices, &num);
+                         MAX_DEVICES-num_devices, devices+num_devices, &num);
     check_error(err, "getting deviceS");
-    numDevices += num;
+    num_devices += num;
   }
 
-  return numDevices;
+  return num_devices;
 }
 
-void getDeviceName(cl_device_id device, char name[MAX_INFO_STRING])
-{
-  cl_device_info info = CL_DEVICE_NAME;
-  clGetDeviceInfo(device, info, MAX_INFO_STRING, name, NULL);
-}
-
-
-int parseUInt(const char *str, cl_uint *output)
+int parse_uint(const char *str, cl_uint *output)
 {
   char *next;
   *output = strtoul(str, &next, 10);
   return !strlen(next);
 }
-
-
 
 void parse_arguments(int argc, char *argv[])
 {
@@ -244,10 +235,10 @@ void parse_arguments(int argc, char *argv[])
     {
       // Get list of devices
       cl_device_id devices[MAX_DEVICES];
-      unsigned numDevices = getDeviceList(devices);
+      unsigned num_devices = get_device_list(devices);
 
       // Print device names
-      if (numDevices == 0)
+      if (num_devices == 0)
       {
         printf("No devices found.\n");
       }
@@ -255,10 +246,10 @@ void parse_arguments(int argc, char *argv[])
       {
         printf("\n");
         printf("Devices:\n");
-        for (int i = 0; i < numDevices; i++)
+        for (int i = 0; i < num_devices; i++)
         {
           char name[MAX_INFO_STRING];
-          getDeviceName(devices[i], name);
+          clGetDeviceInfo(devices[i], CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
           printf("%2d: %s\n", i, name);
         }
         printf("\n");
@@ -267,7 +258,7 @@ void parse_arguments(int argc, char *argv[])
     }
     else if (!strcmp(argv[i], "--device"))
     {
-      if (++i >= argc || !parseUInt(argv[i], &device_index))
+      if (++i >= argc || !parse_uint(argv[i], &device_index))
       {
         fprintf(stderr, "Invalid device index\n");
         exit(EXIT_FAILURE);
@@ -288,7 +279,7 @@ void parse_arguments(int argc, char *argv[])
     else
     {
       // Try to parse NDIM
-      if (!parseUInt(argv[i], &Ndim))
+      if (!parse_uint(argv[i], &Ndim))
       {
         printf("Invalid Ndim value\n");
       }
