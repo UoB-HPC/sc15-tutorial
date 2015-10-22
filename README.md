@@ -1,7 +1,7 @@
 # SC15 Tutorial
 
 ## TODO
-- [ ] Add VecAdd OpenCL solution
+- [x] Add VecAdd OpenCL solution
 - [ ] Jacobi OpenCL host code
 - [ ] Basic OpenCL Jacobi kernel
 - [ ] OpenCL column-major approach
