@@ -63,6 +63,8 @@ static cl_uint device_index = 0;
 unsigned get_device_list(cl_device_id devices[MAX_DEVICES]);
 void parse_arguments(int argc, char *argv[]);
 void check_error(const cl_int err, const char *msg);
+char *get_kernel_string(const char *file_name);
+
 
 int main(int argc, char **argv)
 {
@@ -74,6 +76,8 @@ int main(int argc, char **argv)
 
 
   parse_arguments(argc, argv);
+
+  char *kernel_string = get_kernel_string("jac_ocl_basic.cl");
 
   // set matrix dimensions and allocate memory for matrices
   printf(" ndim = %d\n",Ndim);
@@ -286,3 +290,27 @@ void parse_arguments(int argc, char *argv[])
     }
   }
 }
+
+char *get_kernel_string(const char *file_name)
+{
+  FILE *file = fopen(file_name, "r");
+  if (file == NULL)
+  {
+    fprintf(stderr, "Error: kernel file not found\n");
+    exit(EXIT_FAILURE);
+  }
+  fseek(file, 0, SEEK_END);
+  size_t len = ftell(file);
+  fseek(file, 0, SEEK_SET);
+  char *result = (char *)calloc(len+1, sizeof(char));
+  size_t read = fread(result, sizeof(char), len, file);
+  if (read != len)
+  {
+    fprintf(stderr, "Error reading file\n");
+    exit(EXIT_FAILURE);
+  }
+  return result;
+}
+
+
+
