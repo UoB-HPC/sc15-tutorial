@@ -5,3 +5,4 @@ jac_solv
 jac_solv_ocl_basic
 mm_testbed
 stencil
+vadd

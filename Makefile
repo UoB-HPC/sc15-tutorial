@@ -7,23 +7,26 @@
 # verify that you are including the right make.def file for the platform
 include make.def
 
-EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) jac_solv_ocl_basic$(EXE)
+EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) jac_solv_ocl_basic$(EXE) vadd$(EXE)
 
 MM_OBJS  = mm_testbed.$(OBJ) mm_utils.$(OBJ) mm_ijk.$(OBJ) mm_tst_cases.$(OBJ)
 
 CM_OBJS  = center_of_mass.$(OBJ) random.$(OBJ)
 
-STN_OBJS  = stencil.$(OBJ)  
+STN_OBJS  = stencil.$(OBJ)
 
-GAUS_OBJS  = gauss_solv.$(OBJ) mm_utils.$(OBJ) 
+GAUS_OBJS  = gauss_solv.$(OBJ) mm_utils.$(OBJ)
 
-JAC_OBJS  = jac_solv.$(OBJ) mm_utils.$(OBJ) 
+JAC_OBJS  = jac_solv.$(OBJ) mm_utils.$(OBJ)
 
-JAC_OCL_BASIC_OBJS  = jac_solv_ocl_basic.$(OBJ) mm_utils.$(OBJ) 
+JAC_OCL_BASIC_OBJS  = jac_solv_ocl_basic.$(OBJ) mm_utils.$(OBJ)
+
+VADD_OCL_OBJS  = vadd.$(OBJ)
+
 
 all: $(EXES)
 
-stencil$(EXE): $(STN_OBJS) 
+stencil$(EXE): $(STN_OBJS)
 	$(CLINKER) $(CFLAGS) -o stencil$(EXE) $(STN_OBJS) $(LIBS)
 
 jac_solv$(EXE): $(JAC_OBJS) mm_utils.h
@@ -40,6 +43,9 @@ mm_testbed$(EXE): $(MM_OBJS) mm_utils.h
 
 cmass$(EXE): $(CM_OBJS) random.h
 	$(CLINKER) $(CFLAGS) -o cmass$(EXE) $(CM_OBJS) $(LIBS)
+
+vadd$(EXE): $(VADD_OCL_OBJS)
+	$(CLINKER) $(CFLAGS) -o vadd$(EXE) $(VADD_OCL_OBJS) $(LIBS) $(OCL_LIBS)
 
 test: $(EXES)
 	for i in $(EXES); do \
