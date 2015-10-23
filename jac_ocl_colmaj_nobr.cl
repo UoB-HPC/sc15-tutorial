@@ -17,7 +17,7 @@ kernel void jacobi(
   xnew[i] = (TYPE) 0.0;
   for (int j = 0; j < Ndim; j++)
   {
-      xnew[i] += A[j*Ndim + i] * xold[j] * (TYPE)(i != j);
+    xnew[i] += A[j*Ndim + i] * xold[j] * (TYPE)(i != j);
   }
   xnew[i] = (b[i] - xnew[i]) / A[i*Ndim + i];
 }
