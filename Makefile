@@ -7,7 +7,7 @@
 # verify that you are including the right make.def file for the platform
 include make.def
 
-EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) jac_solv_ocl_basic$(EXE) jac_solv_ocl_colmaj$(EXE) vadd$(EXE)
+EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) jac_solv_ocl_basic$(EXE) jac_solv_ocl_colmaj$(EXE) jac_solv_ocl_colmaj_nobr$(EXE) vadd$(EXE)
 
 MM_OBJS  = mm_testbed.$(OBJ) mm_utils.$(OBJ) mm_ijk.$(OBJ) mm_tst_cases.$(OBJ)
 
@@ -22,6 +22,8 @@ JAC_OBJS  = jac_solv.$(OBJ) mm_utils.$(OBJ)
 JAC_OCL_BASIC_OBJS  = jac_solv_ocl_basic.$(OBJ) mm_utils.$(OBJ)
 
 JAC_OCL_COLMAJ_OBJS  = jac_solv_ocl_colmaj.$(OBJ) mm_utils.$(OBJ)
+
+JAC_OCL_COLMAJ_NOBR_OBJS  = jac_solv_ocl_colmaj_nobr.$(OBJ) mm_utils.$(OBJ)
 
 VADD_OCL_OBJS  = vadd.$(OBJ)
 
@@ -39,6 +41,10 @@ jac_solv_ocl_basic$(EXE): $(JAC_OCL_BASIC_OBJS) mm_utils.h
 
 jac_solv_ocl_colmaj$(EXE): $(JAC_OCL_COLMAJ_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv_ocl_colmaj$(EXE) $(JAC_OCL_COLMAJ_OBJS) $(LIBS) $(OCL_LIBS)
+
+jac_solv_ocl_colmaj_nobr$(EXE): $(JAC_OCL_COLMAJ_NOBR_OBJS) mm_utils.h
+	$(CLINKER) $(CFLAGS) -o jac_solv_ocl_colmaj_nobr$(EXE) $(JAC_OCL_COLMAJ_NOBR_OBJS) $(LIBS) $(OCL_LIBS)
+
 
 gauss_solv$(EXE): $(GAUS_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o gauss_solv$(EXE) $(GAUS_OBJS) $(LIBS)

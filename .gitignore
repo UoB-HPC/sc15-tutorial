@@ -4,6 +4,7 @@ gauss_solv
 jac_solv
 jac_solv_ocl_basic
 jac_solv_ocl_colmaj
+jac_solv_ocl_colmaj_nobr
 mm_testbed
 stencil
 vadd
