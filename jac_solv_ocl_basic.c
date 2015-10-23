@@ -72,7 +72,7 @@ int main(int argc, char **argv)
   int i,j, iters;
   double start_time, elapsed_time;
   TYPE conv, tmp, err, chksum;
-  TYPE *A, *b, *x1, *x2, *xnew, *xold;
+  TYPE *A, *b, *x1, *x2, *xnew, *xold, *conv_tmp;
 
   parse_arguments(argc, argv);
 
@@ -83,6 +83,7 @@ int main(int argc, char **argv)
   b    = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x1   = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x2   = (TYPE *) malloc(Ndim*sizeof(TYPE));
+  conv_tmp   = (TYPE *) malloc(64*sizeof(TYPE));
 
   if (!A || !b || !x1 || !x2)
   {
@@ -114,7 +115,8 @@ int main(int argc, char **argv)
   cl_command_queue commands;               // compute command queue
   cl_program       program;                // compute program
   cl_kernel        ko_jacobi;              // compute kernel
-  cl_mem           d_A, d_b, d_x1, d_x2;   // device memory objects
+  cl_kernel        ko_convergence;         // convergence kernel
+  cl_mem           d_A, d_b, d_x1, d_x2, d_conv;   // device memory objects
 
 
   // Get list of OpenCL devices
@@ -164,7 +166,9 @@ int main(int argc, char **argv)
 
   // Create the compute kernel from the program
   ko_jacobi = clCreateKernel(program, "jacobi", &clerr);
-  check_error(clerr, "Creating kernel");
+  check_error(clerr, "Creating compute kernel");
+  ko_convergence = clCreateKernel(program, "convergence", &clerr);
+  check_error(clerr, "Creating convergence kernel");
 
   // Create the input buffers in device memory
   d_A  = clCreateBuffer(context, CL_MEM_READ_ONLY, Ndim*Ndim*sizeof(TYPE), NULL, &clerr);
@@ -178,6 +182,9 @@ int main(int argc, char **argv)
 
   d_x2 = clCreateBuffer(context, CL_MEM_READ_WRITE, Ndim*sizeof(TYPE), NULL, &clerr);
   check_error(clerr, "Creating buffer d_x2");
+
+  d_conv = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 64*sizeof(TYPE), NULL, &clerr);
+  check_error(clerr, "Creating buffer d_conv");
 
   // Write initial values to buffers
   clerr = clEnqueueWriteBuffer(commands, d_A, CL_TRUE, 0, Ndim*Ndim*sizeof(TYPE), A, 0, NULL, NULL);
@@ -196,8 +203,14 @@ int main(int argc, char **argv)
   clerr  = clSetKernelArg(ko_jacobi, 0, sizeof(cl_uint), &Ndim);
   clerr |= clSetKernelArg(ko_jacobi, 1, sizeof(cl_mem), &d_A);
   clerr |= clSetKernelArg(ko_jacobi, 2, sizeof(cl_mem), &d_b);
-  check_error(clerr, "Setting kernel arguments");
+  check_error(clerr, "Setting compute kernel arguments");
 
+  // Set the arguments to our convergence kernel
+  clerr  = clSetKernelArg(ko_convergence, 0, sizeof(cl_mem), &d_x1);
+  clerr |= clSetKernelArg(ko_convergence, 1, sizeof(cl_mem), &d_x2);
+  clerr |= clSetKernelArg(ko_convergence, 2, 64*sizeof(TYPE), NULL);
+  clerr |= clSetKernelArg(ko_convergence, 3, sizeof(cl_mem), &d_conv);
+  check_error(clerr, "Setting converence kernel arguments");
 
   start_time = omp_get_wtime();
 //
@@ -224,20 +237,20 @@ int main(int argc, char **argv)
     // Enqueue the kernel
     size_t global[] = {Ndim};
     clerr = clEnqueueNDRangeKernel(commands, ko_jacobi, 1, NULL, global, NULL, 0, NULL, NULL);
-    check_error(clerr, "Enqueueing kernel");
+    check_error(clerr, "Enqueueing compute kernel");
 
-    //
-    // test convergence
-    //
-    // TODO: Convergence testing in OpenCL
-    //conv = 0.0;
-    //for (i = 0; i < Ndim; i++)
-    //{
-    //  tmp  = xnew[i]-xold[i];
-    //  printf("tmp = %lf\n", tmp);
-    //  conv += tmp*tmp;
-    //}
-    //conv = sqrt((double)conv);
+
+    // Test convergence
+    size_t local[] = {64};
+    clerr = clEnqueueNDRangeKernel(commands, ko_convergence, 1, NULL, global, local, 0, NULL, NULL);
+    check_error(clerr, "Enqueueing convergence kernel");
+    clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, 64*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
+    check_error(clerr, "Copying back partial convergence array");
+    conv = (TYPE) 0.0;
+    for (int ll = 0 ; ll < 64; ll++)
+      conv += conv_tmp[ll];
+    conv = sqrt((double)conv);
+
 
 #ifdef DEBUG
     printf(" conv = %f \n",(float)conv);
