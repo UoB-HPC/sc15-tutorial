@@ -77,6 +77,13 @@ int main(int argc, char **argv)
 
   parse_arguments(argc, argv);
 
+  // Check Ndim is divisible by workgroup size (64)
+  if (Ndim % WGSIZE != 0)
+  {
+    printf("Problem size must be divisible by %d\n", WGSIZE);
+    exit(EXIT_FAILURE);
+  }
+
   // set matrix dimensions and allocate memory for matrices
   printf(" ndim = %d\n",Ndim);
 
