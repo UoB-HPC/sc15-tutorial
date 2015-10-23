@@ -85,7 +85,7 @@ int main(int argc, char **argv)
   b    = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x1   = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x2   = (TYPE *) malloc(Ndim*sizeof(TYPE));
-  conv_tmp   = (TYPE *) malloc(64*sizeof(TYPE));
+  conv_tmp   = (TYPE *) malloc(Ndim/64*sizeof(TYPE));
 
   if (!A || !b || !x1 || !x2)
   {
@@ -246,10 +246,10 @@ int main(int argc, char **argv)
     size_t local[] = {64};
     clerr = clEnqueueNDRangeKernel(commands, ko_convergence, 1, NULL, global, local, 0, NULL, NULL);
     check_error(clerr, "Enqueueing convergence kernel");
-    clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, 64*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
+    clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, Ndim/64*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
     check_error(clerr, "Copying back partial convergence array");
     conv = (TYPE) 0.0;
-    for (int ll = 0 ; ll < 64; ll++)
+    for (int ll = 0 ; ll < Ndim/64; ll++)
       conv += conv_tmp[ll];
     conv = sqrt((double)conv);
 
