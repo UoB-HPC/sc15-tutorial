@@ -18,7 +18,7 @@
 #include <string.h>
 #include <sys/types.h>
 #ifdef __APPLE__
-#include <OpenCL/opencl.h>
+#include <OpenCL/cl.h>
 #include <unistd.h>
 #else
 #include <CL/cl.h>
