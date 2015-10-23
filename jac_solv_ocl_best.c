@@ -466,6 +466,7 @@ void parse_arguments(int argc, char *argv[])
       if (!parse_uint(argv[i], &Ndim))
       {
         printf("Invalid Ndim value\n");
+        exit(EXIT_FAILURE);
       }
     }
   }
