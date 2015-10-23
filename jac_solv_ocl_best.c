@@ -60,7 +60,7 @@ static cl_uint Ndim = DEF_SIZE;           // A[Ndim][Ndim]
 
 static cl_uint device_index = 0;
 
-static size_t wgsize = 64;
+static cl_uint wgsize = 64;
 
 unsigned get_device_list(cl_device_id devices[MAX_DEVICES]);
 void parse_arguments(int argc, char *argv[]);
