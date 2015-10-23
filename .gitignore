@@ -6,6 +6,7 @@ jac_solv_ocl_basic
 jac_solv_ocl_colmaj
 jac_solv_ocl_colmaj_nobr
 jac_solv_ocl_colmaj_nobr_wg
+jac_solv_ocl_best
 mm_testbed
 stencil
 vadd
