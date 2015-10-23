@@ -6,5 +6,5 @@
 - [x] Basic OpenCL Jacobi kernel
 - [x] OpenCL column-major approach
 - [x] OpenCL Jacobi kernel with no branches
-- [ ] OpenCL Jacobi work-group size changes
-- [ ] Bells-and-whistles OpenCL Jacobi solution
+- [x] OpenCL Jacobi work-group size changes
+- [] Bells-and-whistles OpenCL Jacobi solution
