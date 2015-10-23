@@ -7,10 +7,10 @@
 
 kernel void jacobi(
   const unsigned Ndim,
-  global const TYPE * restrict A,
-  global const TYPE * restrict b,
-  global const TYPE * restrict xold,
-  global TYPE * restrict xnew)
+  global TYPE * A,
+  global TYPE * b,
+  global TYPE * xold,
+  global TYPE * xnew)
 {
   size_t i = get_global_id(0);
 
@@ -25,10 +25,10 @@ kernel void jacobi(
 
 
 kernel void convergence(
-  global const TYPE * restrict xold,
-  global const TYPE * restrict xnew,
-  local TYPE * restrict conv_loc,
-  global TYPE * restrict conv
+  global TYPE * xold,
+  global TYPE * xnew,
+  local TYPE * conv_loc,
+  global TYPE * conv
   )
 {
   size_t i = get_global_id(0);
