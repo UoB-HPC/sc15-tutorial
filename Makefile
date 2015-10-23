@@ -31,7 +31,6 @@ JAC_OCL_BEST_OBJS  = jac_solv_ocl_best.$(OBJ) mm_utils.$(OBJ)
 
 VADD_OCL_OBJS  = vadd.$(OBJ)
 
-
 all: $(EXES)
 
 stencil$(EXE): $(STN_OBJS)
@@ -74,6 +73,19 @@ test: $(EXES)
 
 clean:
 	$(RM) $(EXES) *.$(OBJ)
+
+mm_testbed.$(OBJ): mm_utils.h
+mm_utils.$(OBJ): mm_utils.h
+mm_ijk.$(OBJ): mm_utils.h
+mm_tst_cases.$(OBJ): mm_utils.h
+gauss_solv.$(OBJ): mm_utils.h
+jac_solv.$(OBJ): mm_utils.h
+jac_solv_ocl_basic.$(OBJ): mm_utils.h
+jac_solv_ocl_colmaj.$(OBJ): mm_utils.h
+jac_solv_ocl_colmaj_nobr.$(OBJ): mm_utils.h
+jac_solv_ocl_colmaj_nobr_wg.$(OBJ): mm_utils.h
+jac_solv_ocl_best.$(OBJ): mm_utils.h
+
 
 .SUFFIXES:
 .SUFFIXES: .c .cpp .$(OBJ)
