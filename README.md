@@ -2,7 +2,7 @@
 
 ## TODO
 - [x] Add VecAdd OpenCL solution
-- [ ] Jacobi OpenCL host code
+- [x] Jacobi OpenCL host code
 - [x] Basic OpenCL Jacobi kernel
 - [ ] OpenCL column-major approach
 - [ ] OpenCL Jacobi kernel with no branches
