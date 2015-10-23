@@ -287,7 +287,7 @@ int main(int argc, char **argv)
   {
     xold[i] = (TYPE) 0.0;
       for (j = 0; j < Ndim; j++)
-        xold[i] += A[i*Ndim+j]*xnew[j];
+        xold[i] += A[j*Ndim+i]*xnew[j];
     tmp = xold[i] - b[i];
 #ifdef DEBUG
     printf(" i=%d, diff = %f,  computed b = %f, input b= %f \n",
