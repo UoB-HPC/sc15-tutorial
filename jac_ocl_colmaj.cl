@@ -1,7 +1,5 @@
 
-#define TYPE double
-
-#if (TYPE == double)
+#ifdef DOUBLE
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 

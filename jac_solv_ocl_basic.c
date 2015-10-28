@@ -160,7 +160,12 @@ int main(int argc, char **argv)
   check_error(clerr, "Creating program");
 
   // Build the program
-  clerr = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+  char *options;
+  if (sizeof(TYPE) == sizeof(float))
+    options = "-DTYPE=float";
+  else if (sizeof(TYPE) == sizeof(double))
+    options = "-DTYPE=double -DDOUBLE";
+  clerr = clBuildProgram(program, 0, NULL, options, NULL, NULL);
   if (clerr == CL_BUILD_PROGRAM_FAILURE)
   {
     size_t len;
