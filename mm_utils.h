@@ -6,6 +6,7 @@
 #define AVAL    3.0
 #define BVAL    5.0
 #define TYPE    double
+//#define TYPE    float
 #define BIG     10000000.0
 #define SMALL   0.00000001
 #define TOL     0.001
@@ -26,9 +27,11 @@ void init_progression_matrix (int Ndim,  int Mdim,  int Pdim,
 void output_results(int Ndim, int Mdim, int Pdim, 
                   int nerr, double ave_t, double min_t, double max_t);
 
-void mm_tst_cases(int NTRIALS, int Ndim, int Mdim, int Pdim, TYPE* A, TYPE* B, TYPE* C, 
-              void (*mm_func)(int, int, int, TYPE *, TYPE *, TYPE *));
+void mm_tst_cases(int NTRIALS, int Ndim, int Mdim, int Pdim, TYPE* A, TYPE* B, 
+        TYPE* C, void (*mm_func)(int, int, int, TYPE *, TYPE *, TYPE *));
 
 void init_diag_dom_matrix(int Ndim,  TYPE *A);
 
 void init_diag_dom_near_identity_matrix(int Ndim,  TYPE *A);
+
+void init_colmaj_diag_dom_near_identity_matrix(int Ndim,  TYPE *A);
