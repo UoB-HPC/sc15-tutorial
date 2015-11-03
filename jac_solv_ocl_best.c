@@ -49,16 +49,39 @@
 
 int main(int argc, char **argv)
 {
-
   int i,j, iters;
   double start_time, elapsed_time;
   TYPE conv, tmp, err, chksum;
   TYPE *A, *b, *x1, *x2, *xnew, *xold, *conv_tmp;
 
-  Arguments args = {DEF_SIZE, 0, 64};
+  unsigned num_devices;
+  char device_name[MAX_INFO_STRING];
+  cl_device_id devices[MAX_DEVICES];
+
+  cl_int           clerr;
+  cl_device_id     device;                        // compute device id
+  cl_context       context;                       // compute context
+  cl_command_queue commands;                      // compute command queue
+  cl_program       program;                       // compute program
+  cl_kernel        ko_jacobi;                     // compute kernel
+  cl_kernel        ko_convergence;                // convergence kernel
+  cl_mem           d_A, d_b, d_x1, d_x2, d_conv;  // device memory objects
+  cl_mem           d_xnew;
+  cl_mem           d_xold;
+
+  char *kernel_string = NULL;
+  char *build_options = NULL;
+
+  cl_uint Ndim;
+  Arguments args;
+
+
+  args.n            = DEF_SIZE;
+  args.device_index = 0;
+  args.wgsize       = 64;
   parse_arguments(argc, argv, &args);
 
-  cl_uint Ndim = args.n;
+  Ndim = args.n;
 
   // Check Ndim is divisible by workgroup size
   if (Ndim % args.wgsize != 0)
@@ -99,22 +122,8 @@ int main(int argc, char **argv)
     b[i]  = (TYPE)(rand()%51)/100.0;
   }
 
-
-  cl_int           clerr;
-  cl_device_id     device;                 // compute device id
-  cl_context       context;                // compute context
-  cl_command_queue commands;               // compute command queue
-  cl_program       program;                // compute program
-  cl_kernel        ko_jacobi;              // compute kernel
-  cl_kernel        ko_convergence;         // convergence kernel
-  cl_mem           d_A, d_b, d_x1, d_x2, d_conv;   // device memory objects
-
-
-  // Get list of OpenCL devices
-  cl_device_id devices[MAX_DEVICES];
-  unsigned num_devices = get_device_list(devices);
-
   // Check device index in range
+  num_devices = get_device_list(devices);
   if (args.device_index >= num_devices)
   {
     printf("Invalid device index (try '--list')\n");
@@ -124,10 +133,8 @@ int main(int argc, char **argv)
   device = devices[args.device_index];
 
   // Print device name
-  char name[MAX_INFO_STRING];
-  clGetDeviceInfo(device, CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
-  printf("\nUsing OpenCL device: %s\n", name);
-
+  clGetDeviceInfo(device, CL_DEVICE_NAME, MAX_INFO_STRING, device_name, NULL);
+  printf("\nUsing OpenCL device: %s\n", device_name);
 
   // Create a compute context
   context = clCreateContext(0, 1, &device, NULL, NULL, &clerr);
@@ -138,17 +145,16 @@ int main(int argc, char **argv)
   check_error(clerr, "Creating command queue");
 
   // Create the compute program from the source buffer
-  char *kernel_string = get_kernel_string("jac_ocl_best.cl");
+  kernel_string = get_kernel_string("jac_ocl_best.cl");
   program = clCreateProgramWithSource(context, 1, (const char **)&kernel_string, NULL, &clerr);
   check_error(clerr, "Creating program");
 
   // Build the program
-  char *options;
   if (sizeof(TYPE) == sizeof(float))
-    options = "-DTYPE=float";
+    build_options = "-DTYPE=float";
   else if (sizeof(TYPE) == sizeof(double))
-    options = "-DTYPE=double -DDOUBLE";
-  clerr = clBuildProgram(program, 0, NULL, options, NULL, NULL);
+    build_options = "-DTYPE=double -DDOUBLE";
+  clerr = clBuildProgram(program, 0, NULL, build_options, NULL, NULL);
   if (clerr == CL_BUILD_PROGRAM_FAILURE)
   {
     size_t len;
@@ -216,14 +222,18 @@ int main(int argc, char **argv)
   iters = 0;
   xnew  = x1;
   xold  = x2;
-  cl_mem d_xnew = d_x1;
-  cl_mem d_xold = d_x2;
+  d_xnew = d_x1;
+  d_xold = d_x2;
   while ((conv > TOLERANCE) && (iters<MAX_ITERS))
   {
-    iters++;
+    int ll;
+    size_t global[] = {Ndim};
+    size_t local[] = {args.wgsize};
+
     cl_mem d_xtmp = d_xnew;
     d_xnew = d_xold; // don't copy arrays.
     d_xold = d_xtmp; // just swap pointers.
+    iters++;
 
     // Update the xold/xnew kernel arguments
     clerr  = clSetKernelArg(ko_jacobi, 3, sizeof(cl_mem), &d_xold);
@@ -231,11 +241,8 @@ int main(int argc, char **argv)
     check_error(clerr, "Updating xold/xnew kernel arguments");
 
     // Enqueue the kernel
-    size_t global[] = {Ndim};
-    size_t local[] = {args.wgsize};
     clerr = clEnqueueNDRangeKernel(commands, ko_jacobi, 1, NULL, global, local, 0, NULL, NULL);
     check_error(clerr, "Enqueueing compute kernel");
-
 
     // Test convergence
     clerr = clEnqueueNDRangeKernel(commands, ko_convergence, 1, NULL, global, local, 0, NULL, NULL);
@@ -243,15 +250,13 @@ int main(int argc, char **argv)
     clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, Ndim/args.wgsize*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
     check_error(clerr, "Copying back partial convergence array");
     conv = (TYPE) 0.0;
-    for (int ll = 0 ; ll < Ndim/args.wgsize; ll++)
+    for (ll = 0 ; ll < Ndim/args.wgsize; ll++)
       conv += conv_tmp[ll];
     conv = sqrt((double)conv);
-
 
 #ifdef DEBUG
     printf(" conv = %f \n",(float)conv);
 #endif
-
   }
 
   clerr = clFinish(commands);
