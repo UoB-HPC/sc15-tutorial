@@ -56,9 +56,9 @@ int main(int argc, char **argv)
   TYPE *A, *b, *x1, *x2, *xnew, *xold, *conv_tmp;
 
   Arguments args = {DEF_SIZE, 0, 64};
-  parse_arguments(argc, argv, "jac_ocl_colmaj_nobr", "NDIM", "Set matrix dimensions to NDIM", &args);
+  parse_arguments(argc, argv, "jac_ocl_colmaj_nobr", &args);
 
-  cl_uint Ndim = args.positional;
+  cl_uint Ndim = args.n;
 
   // Check Ndim is divisible by workgroup size
   if (Ndim % args.wgsize != 0)

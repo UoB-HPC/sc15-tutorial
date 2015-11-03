@@ -64,9 +64,7 @@ int parse_uint(const char *str, cl_uint *output)
   return !strlen(next);
 }
 
-void parse_arguments(int argc, char *argv[], const char *exe_name,
-                     const char *pos_name, const char *pos_help,
-                     Arguments *args)
+void parse_arguments(int argc, char *argv[], const char *exe_name, Arguments *args)
 {
   for (int i = 1; i < argc; i++)
   {
@@ -120,16 +118,17 @@ void parse_arguments(int argc, char *argv[], const char *exe_name,
       printf("        --list               List available devices\n");
       printf("        --device     INDEX   Select device at INDEX\n");
       printf("        --wgsize     WGSIZE  Set workgroup size to WGSIZE\n");
-      printf("  %-12s               %s\n", pos_name, pos_help);
+      printf("  N                          Set problem size to N\n");
       printf("\n");
       exit(EXIT_SUCCESS);
     }
     else
     {
       // Try to parse positional argument
-      if (!parse_uint(argv[i], &args->positional))
+      if (!parse_uint(argv[i], &args->n))
       {
-        printf("Invalid %s value\n", pos_name);
+        printf("Invalid value for problem size '%s'\n", argv[i]);
+        exit(EXIT_FAILURE);
       }
     }
   }

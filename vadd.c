@@ -54,9 +54,9 @@ int main(int argc, char** argv)
   int          err;               // error code returned from OpenCL calls
 
   Arguments args = {1024, 0, 0};
-  parse_arguments(argc, argv, "vadd", "LEN", "Set length of vector to LEN", &args);
+  parse_arguments(argc, argv, "vadd", &args);
 
-  unsigned count = args.positional;
+  unsigned count = args.n;
   float*       h_a = (float*) calloc(count, sizeof(float));       // a vector
   float*       h_b = (float*) calloc(count, sizeof(float));       // b vector
   float*       h_c = (float*) calloc(count, sizeof(float));       // c vector (a+b) returned from the compute device
