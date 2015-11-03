@@ -14,17 +14,20 @@ void check_error(const cl_int err, const char *msg)
 
 unsigned get_device_list(cl_device_id devices[MAX_DEVICES])
 {
-  cl_int err;
+  cl_int         err;
+
+  cl_uint        num_platforms = 0;
+  cl_uint        num_devices = 0;
+  cl_platform_id platforms[MAX_PLATFORMS];
+
+  int i;
 
   // Get list of platforms
-  cl_uint num_platforms = 0;
-  cl_platform_id platforms[MAX_PLATFORMS];
   err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &num_platforms);
   check_error(err, "getting platforms");
 
   // Enumerate devices
-  unsigned num_devices = 0;
-  for (int i = 0; i < num_platforms; i++)
+  for (i = 0; i < num_platforms; i++)
   {
     cl_uint num = 0;
     err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL,
@@ -36,19 +39,28 @@ unsigned get_device_list(cl_device_id devices[MAX_DEVICES])
   return num_devices;
 }
 
-char *get_kernel_string(const char *file_name)
+char* get_kernel_string(const char *file_name)
 {
-  FILE *file = fopen(file_name, "r");
+  FILE *file;
+  size_t len;
+  size_t read;
+  char *result;
+
+  file = fopen(file_name, "r");
   if (file == NULL)
   {
     fprintf(stderr, "Error: kernel file not found\n");
     exit(EXIT_FAILURE);
   }
+
+  // Get length of file
   fseek(file, 0, SEEK_END);
-  size_t len = ftell(file);
+  len = ftell(file);
   fseek(file, 0, SEEK_SET);
-  char *result = (char *)calloc(len+1, sizeof(char));
-  size_t read = fread(result, sizeof(char), len, file);
+
+  // Read data
+  result = (char *)calloc(len+1, sizeof(char));
+  read = fread(result, sizeof(char), len, file);
   if (read != len)
   {
     fprintf(stderr, "Error reading file\n");
@@ -66,7 +78,8 @@ int parse_uint(const char *str, cl_uint *output)
 
 void parse_arguments(int argc, char *argv[], Arguments *args)
 {
-  for (int i = 1; i < argc; i++)
+  int i;
+  for (i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "--list"))
     {
@@ -81,9 +94,10 @@ void parse_arguments(int argc, char *argv[], Arguments *args)
       }
       else
       {
+        int d;
         printf("\n");
         printf("Devices:\n");
-        for (int i = 0; i < num_devices; i++)
+        for (d = 0; d < num_devices; d++)
         {
           char name[MAX_INFO_STRING];
           clGetDeviceInfo(devices[i], CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
