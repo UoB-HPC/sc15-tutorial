@@ -63,3 +63,74 @@ int parse_uint(const char *str, cl_uint *output)
   *output = strtoul(str, &next, 10);
   return !strlen(next);
 }
+
+void parse_arguments(int argc, char *argv[], const char *exe_name,
+                     const char *pos_name, const char *pos_help,
+                     Arguments *args)
+{
+  for (int i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "--list"))
+    {
+      // Get list of devices
+      cl_device_id devices[MAX_DEVICES];
+      unsigned num_devices = get_device_list(devices);
+
+      // Print device names
+      if (num_devices == 0)
+      {
+        printf("No devices found.\n");
+      }
+      else
+      {
+        printf("\n");
+        printf("Devices:\n");
+        for (int i = 0; i < num_devices; i++)
+        {
+          char name[MAX_INFO_STRING];
+          clGetDeviceInfo(devices[i], CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
+          printf("%2d: %s\n", i, name);
+        }
+        printf("\n");
+      }
+      exit(EXIT_SUCCESS);
+    }
+    else if (!strcmp(argv[i], "--device"))
+    {
+      if (++i >= argc || !parse_uint(argv[i], &args->device_index))
+      {
+        fprintf(stderr, "Invalid device index\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+    else if (!strcmp(argv[i], "--wgsize"))
+    {
+      if (++i >= argc || !parse_uint(argv[i], &args->wgsize))
+      {
+        fprintf(stderr, "Invalid WGSIZE\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+    else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
+    {
+      printf("\n");
+      printf("Usage: ./%s [OPTIONS]\n\n", exe_name);
+      printf("Options:\n");
+      printf("  -h    --help               Print the message\n");
+      printf("        --list               List available devices\n");
+      printf("        --device     INDEX   Select device at INDEX\n");
+      printf("        --wgsize     WGSIZE  Set workgroup size to WGSIZE\n");
+      printf("  %-12s               %s\n", pos_name, pos_help);
+      printf("\n");
+      exit(EXIT_SUCCESS);
+    }
+    else
+    {
+      // Try to parse positional argument
+      if (!parse_uint(argv[i], &args->positional))
+      {
+        printf("Invalid %s value\n", pos_name);
+      }
+    }
+  }
+}

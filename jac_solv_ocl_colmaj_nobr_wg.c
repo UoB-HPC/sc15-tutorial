@@ -47,14 +47,6 @@
 //#define DEBUG    1     // output a small subset of intermediate values
 //#define VERBOSE  1
 
-static cl_uint Ndim = DEF_SIZE;           // A[Ndim][Ndim]
-
-static cl_uint device_index = 0;
-
-static cl_uint wgsize = 64;
-
-void parse_arguments(int argc, char *argv[]);
-
 int main(int argc, char **argv)
 {
 
@@ -63,12 +55,15 @@ int main(int argc, char **argv)
   TYPE conv, tmp, err, chksum;
   TYPE *A, *b, *x1, *x2, *xnew, *xold, *conv_tmp;
 
-  parse_arguments(argc, argv);
+  Arguments args = {DEF_SIZE, 0, 64};
+  parse_arguments(argc, argv, "jac_ocl_colmaj_nobr_wg", "NDIM", "Set matrix dimensions to NDIM", &args);
+
+  cl_uint Ndim = args.positional;
 
   // Check Ndim is divisible by workgroup size
-  if (Ndim % wgsize != 0)
+  if (Ndim % args.wgsize != 0)
   {
-    printf("Problem size must be divisible by workgroup size of %d\n", wgsize);
+    printf("Problem size must be divisible by workgroup size of %d\n", args.wgsize);
     exit(EXIT_FAILURE);
   }
 
@@ -79,7 +74,7 @@ int main(int argc, char **argv)
   b    = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x1   = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x2   = (TYPE *) malloc(Ndim*sizeof(TYPE));
-  conv_tmp   = (TYPE *) malloc(Ndim/wgsize*sizeof(TYPE));
+  conv_tmp   = (TYPE *) malloc(Ndim/args.wgsize*sizeof(TYPE));
 
   if (!A || !b || !x1 || !x2)
   {
@@ -120,13 +115,13 @@ int main(int argc, char **argv)
   unsigned num_devices = get_device_list(devices);
 
   // Check device index in range
-  if (device_index >= num_devices)
+  if (args.device_index >= num_devices)
   {
     printf("Invalid device index (try '--list')\n");
     return 1;
   }
 
-  device = devices[device_index];
+  device = devices[args.device_index];
 
   // Print device name
   char name[MAX_INFO_STRING];
@@ -184,7 +179,7 @@ int main(int argc, char **argv)
   d_x2 = clCreateBuffer(context, CL_MEM_READ_WRITE, Ndim*sizeof(TYPE), NULL, &clerr);
   check_error(clerr, "Creating buffer d_x2");
 
-  d_conv = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Ndim/wgsize*sizeof(TYPE), NULL, &clerr);
+  d_conv = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Ndim/args.wgsize*sizeof(TYPE), NULL, &clerr);
   check_error(clerr, "Creating buffer d_conv");
 
   // Write initial values to buffers
@@ -209,7 +204,7 @@ int main(int argc, char **argv)
   // Set the arguments to our convergence kernel
   clerr  = clSetKernelArg(ko_convergence, 0, sizeof(cl_mem), &d_x1);
   clerr |= clSetKernelArg(ko_convergence, 1, sizeof(cl_mem), &d_x2);
-  clerr |= clSetKernelArg(ko_convergence, 2, wgsize*sizeof(TYPE), NULL);
+  clerr |= clSetKernelArg(ko_convergence, 2, args.wgsize*sizeof(TYPE), NULL);
   clerr |= clSetKernelArg(ko_convergence, 3, sizeof(cl_mem), &d_conv);
   check_error(clerr, "Setting converence kernel arguments");
 
@@ -237,7 +232,7 @@ int main(int argc, char **argv)
 
     // Enqueue the kernel
     size_t global[] = {Ndim};
-    size_t local[] = {wgsize};
+    size_t local[] = {args.wgsize};
     clerr = clEnqueueNDRangeKernel(commands, ko_jacobi, 1, NULL, global, local, 0, NULL, NULL);
     check_error(clerr, "Enqueueing compute kernel");
 
@@ -245,10 +240,10 @@ int main(int argc, char **argv)
     // Test convergence
     clerr = clEnqueueNDRangeKernel(commands, ko_convergence, 1, NULL, global, local, 0, NULL, NULL);
     check_error(clerr, "Enqueueing convergence kernel");
-    clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, Ndim/wgsize*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
+    clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, Ndim/args.wgsize*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
     check_error(clerr, "Copying back partial convergence array");
     conv = (TYPE) 0.0;
-    for (int ll = 0 ; ll < Ndim/wgsize; ll++)
+    for (int ll = 0 ; ll < Ndim/args.wgsize; ll++)
       conv += conv_tmp[ll];
     conv = sqrt((double)conv);
 
@@ -314,74 +309,4 @@ int main(int argc, char **argv)
   clReleaseKernel(ko_jacobi);
   clReleaseCommandQueue(commands);
   clReleaseContext(context);
-}
-
-void parse_arguments(int argc, char *argv[])
-{
-  for (int i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "--list"))
-    {
-      // Get list of devices
-      cl_device_id devices[MAX_DEVICES];
-      unsigned num_devices = get_device_list(devices);
-
-      // Print device names
-      if (num_devices == 0)
-      {
-        printf("No devices found.\n");
-      }
-      else
-      {
-        printf("\n");
-        printf("Devices:\n");
-        for (int i = 0; i < num_devices; i++)
-        {
-          char name[MAX_INFO_STRING];
-          clGetDeviceInfo(devices[i], CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
-          printf("%2d: %s\n", i, name);
-        }
-        printf("\n");
-      }
-      exit(EXIT_SUCCESS);
-    }
-    else if (!strcmp(argv[i], "--device"))
-    {
-      if (++i >= argc || !parse_uint(argv[i], &device_index))
-      {
-        fprintf(stderr, "Invalid device index\n");
-        exit(EXIT_FAILURE);
-      }
-    }
-    else if (!strcmp(argv[i], "--wg"))
-    {
-      if (++i >= argc || !parse_uint(argv[i], &wgsize))
-      {
-        fprintf(stderr, "Invalid WGSIZE\n");
-        exit(EXIT_FAILURE);
-      }
-    }
-    else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
-    {
-      printf("\n");
-      printf("Usage: ./jac_solv_ocl_basic [OPTIONS]\n\n");
-      printf("Options:\n");
-      printf("  -h    --help               Print the message\n");
-      printf("        --list               List available devices\n");
-      printf("        --device     INDEX   Select device at INDEX\n");
-      printf("        --wg         WGSIZE  Set workgroup size to WGSIZE\n");
-      printf("  NDIM                       Set matrix dimensions to NDIM\n");
-      printf("\n");
-      exit(EXIT_SUCCESS);
-    }
-    else
-    {
-      // Try to parse NDIM
-      if (!parse_uint(argv[i], &Ndim))
-      {
-        printf("Invalid Ndim value\n");
-        exit(EXIT_FAILURE);
-      }
-    }
-  }
 }

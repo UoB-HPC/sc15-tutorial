@@ -22,11 +22,6 @@
 
 #define TOL    (0.001)   // tolerance used in floating point comparisons
 
-static cl_uint length       = 1024;
-static cl_uint device_index = 0;
-
-void parse_arguments(int argc, char *argv[]);
-
 //------------------------------------------------------------------------------
 //
 // kernel:  vadd
@@ -58,11 +53,13 @@ int main(int argc, char** argv)
 {
   int          err;               // error code returned from OpenCL calls
 
-  parse_arguments(argc, argv);
+  Arguments args = {1024, 0, 0};
+  parse_arguments(argc, argv, "vadd", "LEN", "Set length of vector to LEN", &args);
 
-  float*       h_a = (float*) calloc(length, sizeof(float));       // a vector
-  float*       h_b = (float*) calloc(length, sizeof(float));       // b vector
-  float*       h_c = (float*) calloc(length, sizeof(float));       // c vector (a+b) returned from the compute device
+  unsigned count = args.positional;
+  float*       h_a = (float*) calloc(count, sizeof(float));       // a vector
+  float*       h_b = (float*) calloc(count, sizeof(float));       // b vector
+  float*       h_c = (float*) calloc(count, sizeof(float));       // c vector (a+b) returned from the compute device
 
   unsigned int correct;           // number of correct results
 
@@ -80,7 +77,6 @@ int main(int argc, char** argv)
 
   // Fill vectors a and b with random float values
   unsigned i = 0;
-  unsigned count = length;
   for(i = 0; i < count; i++)
   {
     h_a[i] = rand() / (float)RAND_MAX;
@@ -92,13 +88,13 @@ int main(int argc, char** argv)
   unsigned num_devices = get_device_list(devices);
 
   // Check device index in range
-  if (device_index >= num_devices)
+  if (args.device_index >= num_devices)
   {
     printf("Invalid device index (try '--list')\n");
     return 1;
   }
 
-  device = devices[device_index];
+  device = devices[args.device_index];
 
   // Print device name
   char name[MAX_INFO_STRING];
@@ -214,64 +210,4 @@ int main(int argc, char** argv)
 #endif
 
   return 0;
-}
-
-void parse_arguments(int argc, char *argv[])
-{
-  for (int i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "--list"))
-    {
-      // Get list of devices
-      cl_device_id devices[MAX_DEVICES];
-      unsigned num_devices = get_device_list(devices);
-
-      // Print device names
-      if (num_devices == 0)
-      {
-        printf("No devices found.\n");
-      }
-      else
-      {
-        printf("\n");
-        printf("Devices:\n");
-        for (int i = 0; i < num_devices; i++)
-        {
-          char name[MAX_INFO_STRING];
-          clGetDeviceInfo(devices[i], CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
-          printf("%2d: %s\n", i, name);
-        }
-        printf("\n");
-      }
-      exit(EXIT_SUCCESS);
-    }
-    else if (!strcmp(argv[i], "--device"))
-    {
-      if (++i >= argc || !parse_uint(argv[i], &device_index))
-      {
-        fprintf(stderr, "Invalid device index\n");
-        exit(EXIT_FAILURE);
-      }
-    }
-    else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
-    {
-      printf("\n");
-      printf("Usage: ./jac_solv_ocl_basic [OPTIONS]\n\n");
-      printf("Options:\n");
-      printf("  -h    --help               Print the message\n");
-      printf("        --list               List available devices\n");
-      printf("        --device     INDEX   Select device at INDEX\n");
-      printf("  LEN                        Set vector length to LEN\n");
-      printf("\n");
-      exit(EXIT_SUCCESS);
-    }
-    else
-    {
-      // Try to parse NDIM
-      if (!parse_uint(argv[i], &length))
-      {
-        printf("Invalid Ndim value\n");
-      }
-    }
-  }
 }
