@@ -17,26 +17,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#ifdef __APPLE__
-#include <OpenCL/cl.h>
-#include <unistd.h>
-#else
-#include <CL/cl.h>
-#endif
+
+#include "ocl_utils.h"
 
 #define TOL    (0.001)   // tolerance used in floating point comparisons
-
-#define MAX_PLATFORMS     8
-#define MAX_DEVICES      16
-#define MAX_INFO_STRING 256
 
 static cl_uint length       = 1024;
 static cl_uint device_index = 0;
 
-unsigned get_device_list(cl_device_id devices[MAX_DEVICES]);
 void parse_arguments(int argc, char *argv[]);
-void check_error(cl_int err, const char *msg);
-
 
 //------------------------------------------------------------------------------
 //
@@ -225,47 +214,6 @@ int main(int argc, char** argv)
 #endif
 
   return 0;
-}
-
-
-void check_error(const cl_int err, const char *msg)
-{
-  if (err != CL_SUCCESS)
-  {
-    fprintf(stderr, "Error %d: %s\n", err, msg);
-    exit(EXIT_FAILURE);
-  }
-}
-
-unsigned get_device_list(cl_device_id devices[MAX_DEVICES])
-{
-  cl_int err;
-
-  // Get list of platforms
-  cl_uint num_platforms = 0;
-  cl_platform_id platforms[MAX_PLATFORMS];
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &num_platforms);
-  check_error(err, "getting platforms");
-
-  // Enumerate devices
-  unsigned num_devices = 0;
-  for (int i = 0; i < num_platforms; i++)
-  {
-    cl_uint num = 0;
-    err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL,
-                         MAX_DEVICES-num_devices, devices+num_devices, &num);
-    check_error(err, "getting deviceS");
-    num_devices += num;
-  }
-
-  return num_devices;
-}
-
-int parse_uint(const char *str, cl_uint *output)
-{
-  char *next;
-  *output = strtoul(str, &next, 10);
-  return !strlen(next);
 }
 
 void parse_arguments(int argc, char *argv[])

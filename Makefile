@@ -19,17 +19,17 @@ GAUS_OBJS  = gauss_solv.$(OBJ) mm_utils.$(OBJ)
 
 JAC_OBJS  = jac_solv.$(OBJ) mm_utils.$(OBJ)
 
-JAC_OCL_BASIC_OBJS  = jac_solv_ocl_basic.$(OBJ) mm_utils.$(OBJ)
+JAC_OCL_BASIC_OBJS  = jac_solv_ocl_basic.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
-JAC_OCL_COLMAJ_OBJS  = jac_solv_ocl_colmaj.$(OBJ) mm_utils.$(OBJ)
+JAC_OCL_COLMAJ_OBJS  = jac_solv_ocl_colmaj.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
-JAC_OCL_COLMAJ_NOBR_OBJS  = jac_solv_ocl_colmaj_nobr.$(OBJ) mm_utils.$(OBJ)
+JAC_OCL_COLMAJ_NOBR_OBJS  = jac_solv_ocl_colmaj_nobr.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
-JAC_OCL_COLMAJ_NOBR_WG_OBJS  = jac_solv_ocl_colmaj_nobr_wg.$(OBJ) mm_utils.$(OBJ)
+JAC_OCL_COLMAJ_NOBR_WG_OBJS  = jac_solv_ocl_colmaj_nobr_wg.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
-JAC_OCL_BEST_OBJS  = jac_solv_ocl_best.$(OBJ) mm_utils.$(OBJ)
+JAC_OCL_BEST_OBJS  = jac_solv_ocl_best.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
-VADD_OCL_OBJS  = vadd.$(OBJ)
+VADD_OCL_OBJS  = vadd.$(OBJ) ocl_utils.$(OBJ)
 
 all: $(EXES)
 
@@ -80,11 +80,13 @@ mm_ijk.$(OBJ): mm_utils.h
 mm_tst_cases.$(OBJ): mm_utils.h
 gauss_solv.$(OBJ): mm_utils.h
 jac_solv.$(OBJ): mm_utils.h
-jac_solv_ocl_basic.$(OBJ): mm_utils.h
-jac_solv_ocl_colmaj.$(OBJ): mm_utils.h
-jac_solv_ocl_colmaj_nobr.$(OBJ): mm_utils.h
-jac_solv_ocl_colmaj_nobr_wg.$(OBJ): mm_utils.h
-jac_solv_ocl_best.$(OBJ): mm_utils.h
+jac_solv_ocl_basic.$(OBJ): mm_utils.h ocl_utils.h
+jac_solv_ocl_colmaj.$(OBJ): mm_utils.h ocl_utils.h
+jac_solv_ocl_colmaj_nobr.$(OBJ): mm_utils.h ocl_utils.h
+jac_solv_ocl_colmaj_nobr_wg.$(OBJ): mm_utils.h ocl_utils.h
+jac_solv_ocl_best.$(OBJ): mm_utils.h ocl_utils.h
+vadd.$(OBJ): ocl_utils.h
+ocl_utils.$(OBJ): ocl_utils.h
 
 
 .SUFFIXES:

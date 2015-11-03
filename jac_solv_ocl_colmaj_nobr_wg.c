@@ -34,24 +34,15 @@
 #include <omp.h>
 #include <math.h>
 #include <string.h>
+#include "ocl_utils.h"
 #include "mm_utils.h"   //a library of basic matrix utilities functions
                         //and some key constants used in this program
                         //(such as TYPE)
-
-#ifdef __APPLE__
-  #include <OpenCL/cl.h>
-#else
-  #include <CL/cl.h>
-#endif
 
 #define TOLERANCE 0.001
 #define DEF_SIZE  1024
 #define MAX_ITERS 5000
 #define LARGE     1000000.0
-
-#define MAX_PLATFORMS     8
-#define MAX_DEVICES      16
-#define MAX_INFO_STRING 256
 
 //#define DEBUG    1     // output a small subset of intermediate values
 //#define VERBOSE  1
@@ -62,11 +53,7 @@ static cl_uint device_index = 0;
 
 static cl_uint wgsize = 64;
 
-unsigned get_device_list(cl_device_id devices[MAX_DEVICES]);
 void parse_arguments(int argc, char *argv[]);
-void check_error(const cl_int err, const char *msg);
-char *get_kernel_string(const char *file_name);
-
 
 int main(int argc, char **argv)
 {
@@ -329,46 +316,6 @@ int main(int argc, char **argv)
   clReleaseContext(context);
 }
 
-void check_error(const cl_int err, const char *msg)
-{
-  if (err != CL_SUCCESS)
-  {
-    fprintf(stderr, "Error %d: %s\n", err, msg);
-    exit(EXIT_FAILURE);
-  }
-}
-
-unsigned get_device_list(cl_device_id devices[MAX_DEVICES])
-{
-  cl_int err;
-
-  // Get list of platforms
-  cl_uint num_platforms = 0;
-  cl_platform_id platforms[MAX_PLATFORMS];
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &num_platforms);
-  check_error(err, "getting platforms");
-
-  // Enumerate devices
-  unsigned num_devices = 0;
-  for (int i = 0; i < num_platforms; i++)
-  {
-    cl_uint num = 0;
-    err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL,
-                         MAX_DEVICES-num_devices, devices+num_devices, &num);
-    check_error(err, "getting deviceS");
-    num_devices += num;
-  }
-
-  return num_devices;
-}
-
-int parse_uint(const char *str, cl_uint *output)
-{
-  char *next;
-  *output = strtoul(str, &next, 10);
-  return !strlen(next);
-}
-
 void parse_arguments(int argc, char *argv[])
 {
   for (int i = 1; i < argc; i++)
@@ -437,25 +384,4 @@ void parse_arguments(int argc, char *argv[])
       }
     }
   }
-}
-
-char *get_kernel_string(const char *file_name)
-{
-  FILE *file = fopen(file_name, "r");
-  if (file == NULL)
-  {
-    fprintf(stderr, "Error: kernel file not found\n");
-    exit(EXIT_FAILURE);
-  }
-  fseek(file, 0, SEEK_END);
-  size_t len = ftell(file);
-  fseek(file, 0, SEEK_SET);
-  char *result = (char *)calloc(len+1, sizeof(char));
-  size_t read = fread(result, sizeof(char), len, file);
-  if (read != len)
-  {
-    fprintf(stderr, "Error reading file\n");
-    exit(EXIT_FAILURE);
-  }
-  return result;
 }
