@@ -49,23 +49,22 @@ const char *KernelSource = "\n" \
 //------------------------------------------------------------------------------
 
 
-int main(int argc, char** argv)
+int main(int argc, char *argv[])
 {
-  int          err;               // error code returned from OpenCL calls
+  cl_int          err;            // error code returned from OpenCL calls
 
-  Arguments args = {1024, 0, 0};
-  parse_arguments(argc, argv, &args);
-
-  unsigned count = args.n;
-  float*       h_a = (float*) calloc(count, sizeof(float));       // a vector
-  float*       h_b = (float*) calloc(count, sizeof(float));       // b vector
-  float*       h_c = (float*) calloc(count, sizeof(float));       // c vector (a+b) returned from the compute device
-
+  unsigned count;                 // number of elements in vector
+  size_t global;                  // global domain size
   unsigned int correct;           // number of correct results
 
-  size_t global;                  // global domain size
+  float *h_a;                     // host memory used for the input a vector
+  float *h_b;                     // host memory used for the input b vector
+  float *h_c;                     // host memory used for the output c vector
 
-  cl_device_id     device;     // compute device id
+  unsigned num_devices;
+  char device_name[MAX_INFO_STRING];
+  cl_device_id devices[MAX_DEVICES];
+  cl_device_id     device;        // compute device id
   cl_context       context;       // compute context
   cl_command_queue commands;      // compute command queue
   cl_program       program;       // compute program
@@ -75,8 +74,24 @@ int main(int argc, char** argv)
   cl_mem d_b;                     // device memory used for the input  b vector
   cl_mem d_c;                     // device memory used for the output c vector
 
+  unsigned i;                     // loop counter
+  double rtime;                   // timer
+
+  Arguments args;                 // command-line arguments
+
+
+  args.n            = 1024;
+  args.device_index = 0;
+  args.wgsize       = 0;
+  parse_arguments(argc, argv, &args);
+
+  count = args.n;
+
+  h_a = (float*) calloc(count, sizeof(float));    // a vector
+  h_b = (float*) calloc(count, sizeof(float));    // b vector
+  h_c = (float*) calloc(count, sizeof(float));    // c vector (a+b)
+
   // Fill vectors a and b with random float values
-  unsigned i = 0;
   for(i = 0; i < count; i++)
   {
     h_a[i] = rand() / (float)RAND_MAX;
@@ -84,8 +99,7 @@ int main(int argc, char** argv)
   }
 
   // Get list of OpenCL devices
-  cl_device_id devices[MAX_DEVICES];
-  unsigned num_devices = get_device_list(devices);
+  num_devices = get_device_list(devices);
 
   // Check device index in range
   if (args.device_index >= num_devices)
@@ -97,10 +111,8 @@ int main(int argc, char** argv)
   device = devices[args.device_index];
 
   // Print device name
-  char name[MAX_INFO_STRING];
-  clGetDeviceInfo(device, CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
-  printf("\nUsing OpenCL device: %s\n", name);
-
+  clGetDeviceInfo(device, CL_DEVICE_NAME, MAX_INFO_STRING, device_name, NULL);
+  printf("\nUsing OpenCL device: %s\n", device_name);
 
   // Create a compute context
   context = clCreateContext(0, 1, &device, NULL, NULL, &err);
@@ -155,7 +167,7 @@ int main(int argc, char** argv)
   err |= clSetKernelArg(ko_vadd, 3, sizeof(unsigned int), &count);
   check_error(err, "Setting kernel arguments");
 
-  double rtime = omp_get_wtime();
+  rtime = omp_get_wtime();
 
   // Execute the kernel over the entire range of our 1d input data set
   // letting the OpenCL runtime choose the work-group size
@@ -176,16 +188,15 @@ int main(int argc, char** argv)
 
   // Test the results
   correct = 0;
-  float tmp;
-
   for(i = 0; i < count; i++)
   {
-    tmp = h_a[i] + h_b[i];     // assign element i of a+b to tmp
-    tmp -= h_c[i];             // compute deviation of expected and output result
-    if(tmp*tmp < TOL*TOL)        // correct if square deviation is less than tolerance squared
-        correct++;
-    else {
-        printf(" tmp %f h_a %f h_b %f h_c %f \n",tmp, h_a[i], h_b[i], h_c[i]);
+    float tmp = h_a[i] + h_b[i];   // assign element i of a+b to tmp
+    tmp -= h_c[i];                 // compute deviation of expected and output result
+    if(tmp*tmp < TOL*TOL)          // correct if square deviation is less than tolerance squared
+      correct++;
+    else
+    {
+      printf(" tmp %f h_a %f h_b %f h_c %f \n",tmp, h_a[i], h_b[i], h_c[i]);
     }
   }
 
