@@ -54,7 +54,7 @@ int main(int argc, char** argv)
   int          err;               // error code returned from OpenCL calls
 
   Arguments args = {1024, 0, 0};
-  parse_arguments(argc, argv, "vadd", &args);
+  parse_arguments(argc, argv, &args);
 
   unsigned count = args.n;
   float*       h_a = (float*) calloc(count, sizeof(float));       // a vector

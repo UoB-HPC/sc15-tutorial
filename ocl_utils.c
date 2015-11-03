@@ -64,7 +64,7 @@ int parse_uint(const char *str, cl_uint *output)
   return !strlen(next);
 }
 
-void parse_arguments(int argc, char *argv[], const char *exe_name, Arguments *args)
+void parse_arguments(int argc, char *argv[], Arguments *args)
 {
   for (int i = 1; i < argc; i++)
   {
@@ -112,7 +112,7 @@ void parse_arguments(int argc, char *argv[], const char *exe_name, Arguments *ar
     else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
     {
       printf("\n");
-      printf("Usage: ./%s [OPTIONS]\n\n", exe_name);
+      printf("Usage: %s [OPTIONS]\n\n", argv[0]);
       printf("Options:\n");
       printf("  -h    --help               Print the message\n");
       printf("        --list               List available devices\n");

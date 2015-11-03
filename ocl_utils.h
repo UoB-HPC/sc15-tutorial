@@ -32,6 +32,5 @@ char* get_kernel_string(const char *file_name);
 int parse_uint(const char *str, cl_uint *output);
 
 // Parse command-line arguments.
-// exe_name is the name of the executable.
 // args provides default values for each argument, and will receive the final parsed values.
-void parse_arguments(int argc, char *argv[], const char *exe_name, Arguments *args);
+void parse_arguments(int argc, char *argv[], Arguments *args);

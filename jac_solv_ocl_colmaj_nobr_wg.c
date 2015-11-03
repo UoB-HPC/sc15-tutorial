@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   TYPE *A, *b, *x1, *x2, *xnew, *xold, *conv_tmp;
 
   Arguments args = {DEF_SIZE, 0, 64};
-  parse_arguments(argc, argv, "jac_ocl_colmaj_nobr_wg", &args);
+  parse_arguments(argc, argv, &args);
 
   cl_uint Ndim = args.n;
 
