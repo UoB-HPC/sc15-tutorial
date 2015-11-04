@@ -273,8 +273,6 @@ int main(int argc, char **argv)
   elapsed_time = omp_get_wtime() - start_time;
   printf(" Convergence = %g with %d iterations and %f seconds\n",
           (float)conv, iters, (float)elapsed_time);
-  if (err > TOLERANCE)
-    printf("\nWARNING: solution failed to converge\n\n");
 
   //
   // test answer by multiplying my computed value of x by
@@ -300,7 +298,9 @@ int main(int argc, char **argv)
 
   err = sqrt((double)err);
   printf("jacobi solver: err = %f, solution checksum = %f \n",
-           (float)sqrt(err), (float)chksum);
+           (float)err, (float)chksum);
+  if (err > TOLERANCE)
+    printf("\nWARNING: solution failed to converge\n\n");
 
   free(A);
   free(b);
