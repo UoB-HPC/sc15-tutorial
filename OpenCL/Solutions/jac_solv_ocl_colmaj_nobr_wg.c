@@ -86,7 +86,7 @@ int main(int argc, char **argv)
   // Check Ndim is divisible by workgroup size
   if (Ndim % args.wgsize != 0)
   {
-    printf("Problem size must be divisible by workgroup size of %d\n", args.wgsize);
+    printf("Problem size must be divisible by work-group size of %d\n", args.wgsize);
     exit(EXIT_FAILURE);
   }
 
