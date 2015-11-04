@@ -1,6 +1,7 @@
 #include "ocl_utils.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void check_error(const cl_int err, const char *msg)
