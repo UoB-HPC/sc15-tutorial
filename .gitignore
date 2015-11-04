@@ -10,3 +10,17 @@ jac_solv_ocl_best
 mm_testbed
 stencil
 vadd
+
+# OpenMP binaries
+jac_solv_dat_reg
+jac_solv_par_for
+jac_solv_parfor
+jac_solv_targ
+phi_test
+pi_loop
+pi_spmd_final
+pi_targ
+scope_play
+pi
+scope_play
+
