@@ -154,7 +154,7 @@ int main(int argc, char **argv)
    }
    err = sqrt((double)err);
    printf("jacobi solver: err = %f, solution checksum = %f \n",
-                               (float)sqrt(err), (float)chksum);
+                               (float)err, (float)chksum);
 
   free(A);
   free(b);
