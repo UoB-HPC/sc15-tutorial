@@ -101,7 +101,7 @@ int main(int argc, char **argv)
    xnew  = x1;
    xold  = x2;
    #pragma omp target data map(tofrom:xnew[0:Ndim],xold[0:Ndim],conv) \
-                        map(to:A[0:Ndim*Ndim], Ndim)
+                        map(to:A[0:Ndim*Ndim], Ndim, b[0:Ndim])
    while((conv > TOLERANCE) && (iters<MAX_ITERS))
    {
      iters++;
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
      //
      conv = 0.0;
      #pragma omp target 
-        #pragma omp parallel for private(i,tmp) 
+        #pragma omp parallel for private(i,tmp) reduction(+:conv)
         for (i=0; i<Ndim; i++){
             tmp  = xnew[i]-xold[i];
             conv += tmp*tmp;
