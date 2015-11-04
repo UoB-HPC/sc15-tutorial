@@ -145,7 +145,7 @@ int main(int argc, char **argv)
   check_error(clerr, "Creating command queue");
 
   // Create the compute program from the source buffer
-  kernel_string = get_kernel_string("jac_ocl_basic.cl");
+  kernel_string = get_kernel_string("jac_ocl.cl");
   program = clCreateProgramWithSource(context, 1, (const char **)&kernel_string, NULL, &clerr);
   check_error(clerr, "Creating program");
 

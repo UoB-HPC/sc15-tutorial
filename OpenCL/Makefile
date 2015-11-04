@@ -7,7 +7,7 @@
 # verify that you are including the right make.def file for the platform
 include make.def
 
-EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) vadd$(EXE)
+EXES     = mm_testbed$(EXE) cmass$(EXE) gauss_solv$(EXE) stencil$(EXE) jac_solv$(EXE) jac_solv_ocl$(EXE) vadd$(EXE)
 
 MM_OBJS  = mm_testbed.$(OBJ) mm_utils.$(OBJ) mm_ijk.$(OBJ) mm_tst_cases.$(OBJ)
 
@@ -18,6 +18,8 @@ STN_OBJS  = stencil.$(OBJ)
 GAUS_OBJS  = gauss_solv.$(OBJ) mm_utils.$(OBJ)
 
 JAC_OBJS  = jac_solv.$(OBJ) mm_utils.$(OBJ)
+
+JAC_OCL_OBJS  = jac_solv_ocl.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
 VADD_OCL_OBJS  = vadd.$(OBJ) ocl_utils.$(OBJ)
 
@@ -41,6 +43,9 @@ cmass$(EXE): $(CM_OBJS) random.h
 vadd$(EXE): $(VADD_OCL_OBJS)
 	$(CLINKER) $(CFLAGS) -o vadd$(EXE) $(VADD_OCL_OBJS) $(LIBS) $(OCL_LIBS)
 
+jac_solv_ocl$(EXE): $(JAC_OCL_OBJS)
+	$(CLINKER) $(CFLAGS) -o jac_solv_ocl$(EXE) $(JAC_OCL_OBJS) $(LIBS) $(OCL_LIBS)
+
 test: $(EXES)
 	for i in $(EXES); do \
             $(PRE)$$i; \
@@ -55,6 +60,7 @@ mm_ijk.$(OBJ): mm_utils.h
 mm_tst_cases.$(OBJ): mm_utils.h
 gauss_solv.$(OBJ): mm_utils.h
 jac_solv.$(OBJ): mm_utils.h
+jac_solv_ocl.$(OBJ): mm_utils.h ocl_utils.h
 vadd.$(OBJ): ocl_utils.h
 ocl_utils.$(OBJ): ocl_utils.h
 
