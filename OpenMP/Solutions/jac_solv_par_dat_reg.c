@@ -123,15 +123,17 @@ int main(int argc, char **argv)
      //  
      // test convergence
      //
-     conv = 0.0;
-     #pragma omp target 
+     #pragma omp target
+     {
+        conv = 0.0;
         #pragma omp parallel for private(i,tmp) reduction(+:conv)
         for (i=0; i<Ndim; i++){
-            tmp  = xnew[i]-xold[i];
-            conv += tmp*tmp;
-        }
-     conv = sqrt((double)conv);
-     #pragma omp target update from(conv) 
+          tmp  = xnew[i]-xold[i];
+          conv += tmp*tmp;
+      }
+      conv = sqrt((double)conv);
+     }
+     #pragma omp target update from(conv)
 #ifdef DEBUG
      printf(" conv = %f \n",(float)conv);
 #endif
