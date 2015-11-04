@@ -7,7 +7,7 @@
 # verify that you are including the right make.def file for the platform
 include ../make.def
 
-EXES     = mm_testbed$(EXE) jac_solv_ocl_basic$(EXE) jac_solv_ocl_colmaj$(EXE) jac_solv_ocl_colmaj_nobr$(EXE) jac_solv_ocl_colmaj_nobr_wg$(EXE) jac_solv_ocl_best$(EXE)
+EXES     = mm_testbed$(EXE) jac_solv_ocl_basic$(EXE) jac_solv_ocl_colmaj$(EXE) jac_solv_ocl_colmaj_nobr$(EXE) jac_solv_ocl_best$(EXE)
 
 MM_OBJS  = mm_testbed.$(OBJ) mm_utils.$(OBJ) mm_ijk.$(OBJ) mm_tst_cases.$(OBJ)
 
@@ -16,8 +16,6 @@ JAC_OCL_BASIC_OBJS  = jac_solv_ocl_basic.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 JAC_OCL_COLMAJ_OBJS  = jac_solv_ocl_colmaj.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
 JAC_OCL_COLMAJ_NOBR_OBJS  = jac_solv_ocl_colmaj_nobr.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
-
-JAC_OCL_COLMAJ_NOBR_WG_OBJS  = jac_solv_ocl_colmaj_nobr_wg.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
 JAC_OCL_BEST_OBJS  = jac_solv_ocl_best.$(OBJ) mm_utils.$(OBJ) ocl_utils.$(OBJ)
 
@@ -32,9 +30,6 @@ jac_solv_ocl_colmaj$(EXE): $(JAC_OCL_COLMAJ_OBJS) mm_utils.h
 
 jac_solv_ocl_colmaj_nobr$(EXE): $(JAC_OCL_COLMAJ_NOBR_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv_ocl_colmaj_nobr$(EXE) $(JAC_OCL_COLMAJ_NOBR_OBJS) $(LIBS) $(OCL_LIBS)
-
-jac_solv_ocl_colmaj_nobr_wg$(EXE): $(JAC_OCL_COLMAJ_NOBR_WG_OBJS) mm_utils.h
-	$(CLINKER) $(CFLAGS) -o jac_solv_ocl_colmaj_nobr_wg$(EXE) $(JAC_OCL_COLMAJ_NOBR_WG_OBJS) $(LIBS) $(OCL_LIBS)
 
 jac_solv_ocl_best$(EXE): $(JAC_OCL_BEST_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv_ocl_best$(EXE) $(JAC_OCL_BEST_OBJS) $(LIBS) $(OCL_LIBS)
@@ -57,7 +52,6 @@ mm_tst_cases.$(OBJ): mm_utils.h
 jac_solv_ocl_basic.$(OBJ): mm_utils.h ocl_utils.h
 jac_solv_ocl_colmaj.$(OBJ): mm_utils.h ocl_utils.h
 jac_solv_ocl_colmaj_nobr.$(OBJ): mm_utils.h ocl_utils.h
-jac_solv_ocl_colmaj_nobr_wg.$(OBJ): mm_utils.h ocl_utils.h
 jac_solv_ocl_best.$(OBJ): mm_utils.h ocl_utils.h
 ocl_utils.$(OBJ): ocl_utils.h
 
