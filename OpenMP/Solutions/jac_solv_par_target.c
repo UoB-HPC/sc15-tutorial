@@ -107,7 +107,7 @@ int main(int argc, char **argv)
      xold  = xtmp;
 
      #pragma omp target map(tofrom:xnew[0:Ndim],xold[0:Ndim]) \
-                        map(to:A[0:Ndim*Ndim], Ndim)
+                        map(to:A[0:Ndim*Ndim], Ndim, b[0:Ndim])
        #pragma omp parallel for private(i,j) 
        for (i=0; i<Ndim; i++){
            xnew[i] = (TYPE) 0.0;
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
      //
      conv = 0.0;
      #pragma omp target map(to:xnew[0:Ndim],xold[0:Ndim]) map(to:Ndim) map(tofrom:conv) 
-        #pragma omp parallel for private(i,tmp) 
+        #pragma omp parallel for private(i,tmp) reduction(+:conv)
         for (i=0; i<Ndim; i++){
             tmp  = xnew[i]-xold[i];
             conv += tmp*tmp;
