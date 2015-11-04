@@ -100,8 +100,8 @@ void parse_arguments(int argc, char *argv[], Arguments *args)
         for (d = 0; d < num_devices; d++)
         {
           char name[MAX_INFO_STRING];
-          clGetDeviceInfo(devices[i], CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
-          printf("%2d: %s\n", i, name);
+          clGetDeviceInfo(devices[d], CL_DEVICE_NAME, MAX_INFO_STRING, name, NULL);
+          printf("%2d: %s\n", d, name);
         }
         printf("\n");
       }
