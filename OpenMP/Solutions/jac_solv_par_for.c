@@ -174,7 +174,7 @@ int main(int argc, char **argv)
    printf("jacobi solver: err = %f, solution checksum = %f \n",
                                (float)err, (float)chksum);
    if (err > TOLERANCE)
-      printf("\nWARNING: solution failed to converge\n\n");
+      printf("\nWARNING: final solution error > %g\n\n", TOLERANCE);
 
   free(A);
   free(b);

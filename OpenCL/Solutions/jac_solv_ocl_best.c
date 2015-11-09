@@ -298,7 +298,9 @@ int main(int argc, char **argv)
 
   err = sqrt((double)err);
   printf("jacobi solver: err = %f, solution checksum = %f \n",
-           (float)sqrt(err), (float)chksum);
+           (float)err, (float)chksum);
+  if (err > TOLERANCE)
+    printf("\nWARNING: final solution error > %g\n\n", TOLERANCE);
 
   free(A);
   free(b);
