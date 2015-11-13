@@ -6,5 +6,9 @@
 #PBS -N jac_solv_ocl
 #PBS -o jac_solv_ocl.out
 
+# Select the GPU that we've been allocated
+device=$(cat $PBS_GPUFILE)
+device=${device#*gpu}
+
 cd $PBS_O_WORKDIR
-./jac_solv_ocl
+./jac_solv_ocl --device $device

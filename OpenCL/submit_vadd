@@ -6,5 +6,9 @@
 #PBS -N vadd
 #PBS -o vadd.out
 
+# Select the GPU that we've been allocated
+device=$(cat $PBS_GPUFILE)
+device=${device#*gpu}
+
 cd $PBS_O_WORKDIR
-./vadd
+./vadd --device $device
