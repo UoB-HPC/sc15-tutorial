@@ -104,6 +104,11 @@ int main(int argc, char **argv)
      xnew  = xold;   // just swap pointers.
      xold  = xtmp;
 
+
+/*********************************************************
+  START OF JACOBI KERNEL
+*********************************************************/
+
      for (i=0; i<Ndim; i++){
          xnew[i] = (TYPE) 0.0;
          for (j=0; j<Ndim;j++){
@@ -113,6 +118,12 @@ int main(int argc, char **argv)
          xnew[i] = (b[i]-xnew[i])/A[i*Ndim+i];
 
      }
+
+/*********************************************************
+  END OF JACOBI KERNEL
+*********************************************************/
+
+
      //  
      // test convergence
      //
