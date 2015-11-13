@@ -1,4 +1,5 @@
 #include <omp.h>
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef APPLE
 #include <stdlib.h>
