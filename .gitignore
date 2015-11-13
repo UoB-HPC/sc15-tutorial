@@ -11,6 +11,7 @@ jac_solv_ocl_best
 mm_testbed
 stencil
 vadd
+deviceinfo
 
 # OpenMP binaries
 jac_solv_dat_reg
