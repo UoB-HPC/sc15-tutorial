@@ -1,0 +1,14 @@
+# for Babbage (NERSC)
+# copy to make.def
+CC        = cc
+CLINKER   = $(CC)
+OPTFLAGS  = -fopenmp -O3
+LIBS      = -lm
+PRE       = ./
+
+CFLAGS	  = $(OPTFLAGS) $(OPENCL_INCLUDE)
+OCL_LIBS  = -lintelocl $(OPENCL_LIB64)
+
+OBJ=o
+EXE=
+RM=rm -f
