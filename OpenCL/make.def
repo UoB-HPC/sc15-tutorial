@@ -1,9 +1,9 @@
-# for g++ compiler on Apple OS-X
+# Use default cc compiler on Linux
 # copy to make.def
-CC          = icc
+CC          = cc
 CLINKER     = $(CC)
-OPTFLAGS    = -fopenmp -DAPPLE -O3
-#OPTFLAGS    = -fopenmp -DAPPLE 
+OPTFLAGS    = -fopenmp -O3
+#OPTFLAGS    = -fopenmp 
 LIBS        = -lm
 PRE         = ./
 
