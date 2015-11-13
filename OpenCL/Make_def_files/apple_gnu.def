@@ -1,13 +1,13 @@
-# Use default cc compiler on Linux
+# for gcc compiler on Apple OS-X
 # copy to make.def
-CC        = cc
+CC        = gcc
 CLINKER   = $(CC)
-OPTFLAGS  = -fopenmp -O3
+OPTFLAGS  = -fopenmp -DAPPLE -O3
 LIBS      = -lm
 PRE       = ./
 
 CFLAGS	  = $(OPTFLAGS)
-OCL_LIBS  = -lOpenCL
+OCL_LIBS  = -framework OpenCL
 
 OBJ=o
 EXE=
