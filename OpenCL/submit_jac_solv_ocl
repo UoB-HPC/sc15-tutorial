@@ -4,6 +4,7 @@
 #PBS -qteaching
 #PBS -joe
 #PBS -N jac_solv_ocl
+#PBS -o jac_solv_ocl.out
 
 cd $PBS_O_WORKDIR
 ./jac_solv_ocl

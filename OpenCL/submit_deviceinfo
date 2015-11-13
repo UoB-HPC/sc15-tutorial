@@ -4,6 +4,7 @@
 #PBS -qteaching
 #PBS -joe
 #PBS -N deviceinfo
+#PBS -o deviceinfo.out
 
 cd $PBS_O_WORKDIR
 ./deviceinfo

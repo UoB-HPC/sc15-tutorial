@@ -4,6 +4,7 @@
 #PBS -qteaching
 #PBS -joe
 #PBS -N vadd
+#PBS -o vadd.out
 
 cd $PBS_O_WORKDIR
 ./vadd
