@@ -30,6 +30,7 @@
 **  HISTORY: Written by Tim Mattson, Oct 2015
 */
 
+#include <stdlib.h>
 #include <omp.h>
 #include <math.h>
 #include "mm_utils.h"   //a library of basic matrix utilities functions
