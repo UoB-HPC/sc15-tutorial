@@ -1,9 +1,6 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef APPLE
-#include <stdlib.h>
-#endif
 #define AVAL    3.0
 #define BVAL    5.0
 #define TYPE    double
