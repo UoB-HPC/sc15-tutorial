@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
   }
 
   // summarise results
-  printf("C = A+B:  %d out of %d results were correct.\n", correct, args.n);
+  printf("C = A+B:  %d out of %lu results were correct.\n", correct, args.n);
 
   // cleanup then shutdown
   clReleaseMemObject(d_a);
