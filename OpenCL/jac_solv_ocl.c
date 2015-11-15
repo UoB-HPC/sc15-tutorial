@@ -191,7 +191,7 @@ int main(int argc, char **argv)
   d_x2 = clCreateBuffer(context, CL_MEM_READ_WRITE, Ndim*sizeof(TYPE), NULL, &clerr);
   check_error(clerr, "Creating buffer d_x2");
 
-  d_conv = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Ndim/conv_wgsizee*sizeof(TYPE), NULL, &clerr);
+  d_conv = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Ndim/conv_wgsize*sizeof(TYPE), NULL, &clerr);
   check_error(clerr, "Creating buffer d_conv");
 
   // Write initial values to buffers
