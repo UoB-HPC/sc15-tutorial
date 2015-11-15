@@ -37,12 +37,10 @@ const char *KernelSource = "\n" \
 "kernel void vadd(                                                      \n" \
 "  global float* a,                                                     \n" \
 "  global float* b,                                                     \n" \
-"  global float* c,                                                     \n" \
-"  const unsigned int count)                                            \n" \
+"  global float* c)                                                     \n" \
 "{                                                                      \n" \
 "  int i = get_global_id(0);                                            \n" \
-"  if(i < count)                                                        \n" \
-"    c[i] = a[i] + b[i];                                                \n" \
+"  c[i] = a[i] + b[i];                                                  \n" \
 "}                                                                      \n" \
 "\n";
 
@@ -85,14 +83,12 @@ int main(int argc, char *argv[])
   args.wgsize       = 0;
   parse_arguments(argc, argv, &args);
 
-  count = args.n;
-
-  h_a = (float*) calloc(count, sizeof(float));    // a vector
-  h_b = (float*) calloc(count, sizeof(float));    // b vector
-  h_c = (float*) calloc(count, sizeof(float));    // c vector (a+b)
+  h_a = (float*) calloc(args.n, sizeof(float));    // a vector
+  h_b = (float*) calloc(args.n, sizeof(float));    // b vector
+  h_c = (float*) calloc(args.n, sizeof(float));    // c vector (a+b)
 
   // Fill vectors a and b with random float values
-  for(i = 0; i < count; i++)
+  for(i = 0; i < args.n; i++)
   {
     h_a[i] = rand() / (float)RAND_MAX;
     h_b[i] = rand() / (float)RAND_MAX;
@@ -144,34 +140,33 @@ int main(int argc, char *argv[])
   check_error(err, "Creating kernel");
 
   // Create the input (a, b) and output (c) arrays in device memory
-  d_a  = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * count, NULL, &err);
+  d_a  = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * args.n, NULL, &err);
   check_error(err, "Creating buffer d_a");
 
-  d_b  = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * count, NULL, &err);
+  d_b  = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * args.n, NULL, &err);
   check_error(err, "Creating buffer d_b");
 
-  d_c  = clCreateBuffer(context,  CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, &err);
+  d_c  = clCreateBuffer(context,  CL_MEM_WRITE_ONLY, sizeof(float) * args.n, NULL, &err);
   check_error(err, "Creating buffer d_c");
 
   // Write a and b vectors into compute device memory
-  err = clEnqueueWriteBuffer(commands, d_a, CL_TRUE, 0, sizeof(float) * count, h_a, 0, NULL, NULL);
+  err = clEnqueueWriteBuffer(commands, d_a, CL_TRUE, 0, sizeof(float) * args.n, h_a, 0, NULL, NULL);
   check_error(err, "Copying h_a to device at d_a");
 
-  err = clEnqueueWriteBuffer(commands, d_b, CL_TRUE, 0, sizeof(float) * count, h_b, 0, NULL, NULL);
+  err = clEnqueueWriteBuffer(commands, d_b, CL_TRUE, 0, sizeof(float) * args.n, h_b, 0, NULL, NULL);
   check_error(err, "Copying h_b to device at d_b");
 
   // Set the arguments to our compute kernel
   err  = clSetKernelArg(ko_vadd, 0, sizeof(cl_mem), &d_a);
   err |= clSetKernelArg(ko_vadd, 1, sizeof(cl_mem), &d_b);
   err |= clSetKernelArg(ko_vadd, 2, sizeof(cl_mem), &d_c);
-  err |= clSetKernelArg(ko_vadd, 3, sizeof(unsigned int), &count);
   check_error(err, "Setting kernel arguments");
 
   rtime = omp_get_wtime();
 
   // Execute the kernel over the entire range of our 1d input data set
   // letting the OpenCL runtime choose the work-group size
-  global = count;
+  global = args.n;
   err = clEnqueueNDRangeKernel(commands, ko_vadd, 1, NULL, &global, NULL, 0, NULL, NULL);
   check_error(err, "Enqueueing kernel");
 
@@ -183,12 +178,12 @@ int main(int argc, char *argv[])
   printf("\nThe kernel ran in %lf seconds\n",rtime);
 
   // Read back the results from the compute device
-  err = clEnqueueReadBuffer( commands, d_c, CL_TRUE, 0, sizeof(float) * count, h_c, 0, NULL, NULL );
+  err = clEnqueueReadBuffer( commands, d_c, CL_TRUE, 0, sizeof(float) * args.n, h_c, 0, NULL, NULL );
   check_error(err, "Reading results");
 
   // Test the results
   correct = 0;
-  for(i = 0; i < count; i++)
+  for(i = 0; i < args.n; i++)
   {
     float tmp = h_a[i] + h_b[i];   // assign element i of a+b to tmp
     tmp -= h_c[i];                 // compute deviation of expected and output result
@@ -201,7 +196,7 @@ int main(int argc, char *argv[])
   }
 
   // summarise results
-  printf("C = A+B:  %d out of %d results were correct.\n", correct, count);
+  printf("C = A+B:  %d out of %d results were correct.\n", correct, args.n);
 
   // cleanup then shutdown
   clReleaseMemObject(d_a);
