@@ -8,19 +8,38 @@ kernel void jacobi(
   global const TYPE * restrict A,
   global const TYPE * restrict b,
   global const TYPE * restrict xold,
-  global TYPE * restrict xnew)
+  global       TYPE * restrict xnew,
+  local        TYPE * restrict scratch)
 {
-  size_t i = get_global_id(0);
+  size_t row = get_group_id(0);
+  size_t lid = get_local_id(0);
+  size_t lsz = get_local_size(0);
 
-  xnew[i] = (TYPE) 0.0;
-  for (int j = 0; j < Ndim;)
+  // Compute partial sums within each work-item
+  TYPE tmp = (TYPE) 0.0;
+  for (int col = lid; col < Ndim; )
   {
-    xnew[i] += A[j*Ndim + i] * xold[j] * (TYPE)(i != j); j++;
-    xnew[i] += A[j*Ndim + i] * xold[j] * (TYPE)(i != j); j++;
-    xnew[i] += A[j*Ndim + i] * xold[j] * (TYPE)(i != j); j++;
-    xnew[i] += A[j*Ndim + i] * xold[j] * (TYPE)(i != j); j++;
+    tmp += A[row*Ndim + col] * xold[col] * (TYPE)(row != col);
+    col+=lsz;
+    tmp += A[row*Ndim + col] * xold[col] * (TYPE)(row != col);
+    col+=lsz;
+    tmp += A[row*Ndim + col] * xold[col] * (TYPE)(row != col);
+    col+=lsz;
+    tmp += A[row*Ndim + col] * xold[col] * (TYPE)(row != col);
+    col+=lsz;
   }
-  xnew[i] = (b[i] - xnew[i]) / A[i*Ndim + i];
+
+  // Perform work-group reduction to produce final result for this row
+  scratch[lid] = tmp;
+  barrier(CLK_LOCAL_MEM_FENCE);
+  for (int offset = lsz/2; offset > 0; offset/=2)
+  {
+    if (lid < offset)
+      scratch[lid] += scratch[lid + offset];
+    barrier(CLK_LOCAL_MEM_FENCE);
+  }
+  if (lid == 0)
+    xnew[row] = (b[row] - scratch[0]) / A[row*Ndim + row];
 }
 
 

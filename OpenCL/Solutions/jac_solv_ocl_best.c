@@ -90,6 +90,13 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+  // Check Ndim is large enough for loop unrolling
+  if (Ndim/args.wgsize < 4)
+  {
+    printf("Problem size must be larger than wgsize*4 for loop unroling\n");
+    exit(EXIT_FAILURE);
+  }
+
   // set matrix dimensions and allocate memory for matrices
   printf(" ndim = %d\n",Ndim);
 
@@ -105,8 +112,8 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
-  // generate our diagonally dominant matrix, A, in column-major ordering
-  init_colmaj_diag_dom_near_identity_matrix(Ndim, A);
+  // generate our diagonally dominant matrix, A, in row-major ordering
+  init_diag_dom_near_identity_matrix(Ndim, A);
 
 #ifdef VERBOSE
   mm_print(Ndim, Ndim, A);
@@ -205,6 +212,7 @@ int main(int argc, char **argv)
   clerr  = clSetKernelArg(ko_jacobi, 0, sizeof(cl_uint), &Ndim);
   clerr |= clSetKernelArg(ko_jacobi, 1, sizeof(cl_mem), &d_A);
   clerr |= clSetKernelArg(ko_jacobi, 2, sizeof(cl_mem), &d_b);
+  clerr |= clSetKernelArg(ko_jacobi, 5, args.wgsize*sizeof(TYPE), NULL);
   check_error(clerr, "Setting compute kernel arguments");
 
   // Set the arguments to our convergence kernel
@@ -227,7 +235,7 @@ int main(int argc, char **argv)
   while ((conv > TOLERANCE) && (iters<MAX_ITERS))
   {
     int ll;
-    size_t global[] = {Ndim};
+    size_t global[] = {Ndim*args.wgsize};
     size_t local[] = {args.wgsize};
 
     cl_mem d_xtmp = d_xnew;
@@ -245,6 +253,7 @@ int main(int argc, char **argv)
     check_error(clerr, "Enqueueing compute kernel");
 
     // Test convergence
+    global[0] = Ndim;
     clerr = clEnqueueNDRangeKernel(commands, ko_convergence, 1, NULL, global, local, 0, NULL, NULL);
     check_error(clerr, "Enqueueing convergence kernel");
     clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, Ndim/args.wgsize*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
@@ -286,7 +295,7 @@ int main(int argc, char **argv)
   {
     xold[i] = (TYPE) 0.0;
       for (j = 0; j < Ndim; j++)
-        xold[i] += A[j*Ndim+i]*xnew[j];
+        xold[i] += A[i*Ndim+j]*xnew[j];
     tmp = xold[i] - b[i];
 #ifdef DEBUG
     printf(" i=%d, diff = %f,  computed b = %f, input b= %f \n",
