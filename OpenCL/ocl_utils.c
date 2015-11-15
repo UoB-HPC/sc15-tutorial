@@ -70,7 +70,7 @@ char* get_kernel_string(const char *file_name)
   return result;
 }
 
-int parse_uint(const char *str, cl_uint *output)
+int parse_sizet(const char *str, size_t *output)
 {
   char *next;
   *output = strtoul(str, &next, 10);
@@ -110,7 +110,7 @@ void parse_arguments(int argc, char *argv[], Arguments *args)
     }
     else if (!strcmp(argv[i], "--device"))
     {
-      if (++i >= argc || !parse_uint(argv[i], &args->device_index))
+      if (++i >= argc || !parse_sizet(argv[i], &args->device_index))
       {
         fprintf(stderr, "Invalid device index\n");
         exit(EXIT_FAILURE);
@@ -118,7 +118,7 @@ void parse_arguments(int argc, char *argv[], Arguments *args)
     }
     else if (!strcmp(argv[i], "--wgsize"))
     {
-      if (++i >= argc || !parse_uint(argv[i], &args->wgsize))
+      if (++i >= argc || !parse_sizet(argv[i], &args->wgsize))
       {
         fprintf(stderr, "Invalid WGSIZE\n");
         exit(EXIT_FAILURE);
@@ -140,7 +140,7 @@ void parse_arguments(int argc, char *argv[], Arguments *args)
     else
     {
       // Try to parse positional argument
-      if (!parse_uint(argv[i], &args->n))
+      if (!parse_sizet(argv[i], &args->n))
       {
         printf("Invalid value for problem size '%s'\n", argv[i]);
         exit(EXIT_FAILURE);

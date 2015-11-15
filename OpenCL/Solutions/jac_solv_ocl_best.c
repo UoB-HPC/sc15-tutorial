@@ -72,22 +72,35 @@ int main(int argc, char **argv)
   char *kernel_string = NULL;
   char *build_options = NULL;
 
+  size_t conv_wgsize = 64;
   cl_uint Ndim;
   Arguments args;
 
 
   args.n            = DEF_SIZE;
   args.device_index = 0;
-  args.wgsize       = 64;
+  args.wgsize       = 0;
   parse_arguments(argc, argv, &args);
 
   Ndim = args.n;
 
-  // Check Ndim is divisible by workgroup size
-  if (Ndim % args.wgsize != 0)
+  // Check workgroup size is set (needed to unroll loops)
+  if (!args.wgsize)
   {
-    printf("Problem size must be divisible by work-group size of %d\n", args.wgsize);
+    printf("Work-group size must be set to unroll loops\n");
     exit(EXIT_FAILURE);
+  }
+
+  if (args.wgsize)
+  {
+    conv_wgsize = args.wgsize;
+
+    // Check Ndim is divisible by workgroup size
+    if (Ndim % args.wgsize != 0)
+    {
+      printf("Problem size must be divisible by work-group size of %d\n", args.wgsize);
+      exit(EXIT_FAILURE);
+    }
   }
 
   // Check Ndim is large enough for loop unrolling
@@ -104,7 +117,7 @@ int main(int argc, char **argv)
   b    = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x1   = (TYPE *) malloc(Ndim*sizeof(TYPE));
   x2   = (TYPE *) malloc(Ndim*sizeof(TYPE));
-  conv_tmp   = (TYPE *) malloc(Ndim/args.wgsize*sizeof(TYPE));
+  conv_tmp   = (TYPE *) malloc(Ndim/conv_wgsize*sizeof(TYPE));
 
   if (!A || !b || !x1 || !x2)
   {
@@ -192,7 +205,7 @@ int main(int argc, char **argv)
   d_x2 = clCreateBuffer(context, CL_MEM_READ_WRITE, Ndim*sizeof(TYPE), NULL, &clerr);
   check_error(clerr, "Creating buffer d_x2");
 
-  d_conv = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Ndim/args.wgsize*sizeof(TYPE), NULL, &clerr);
+  d_conv = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Ndim/conv_wgsize*sizeof(TYPE), NULL, &clerr);
   check_error(clerr, "Creating buffer d_conv");
 
   // Write initial values to buffers
@@ -218,7 +231,7 @@ int main(int argc, char **argv)
   // Set the arguments to our convergence kernel
   clerr  = clSetKernelArg(ko_convergence, 0, sizeof(cl_mem), &d_x1);
   clerr |= clSetKernelArg(ko_convergence, 1, sizeof(cl_mem), &d_x2);
-  clerr |= clSetKernelArg(ko_convergence, 2, args.wgsize*sizeof(TYPE), NULL);
+  clerr |= clSetKernelArg(ko_convergence, 2, conv_wgsize*sizeof(TYPE), NULL);
   clerr |= clSetKernelArg(ko_convergence, 3, sizeof(cl_mem), &d_conv);
   check_error(clerr, "Setting converence kernel arguments");
 
@@ -236,7 +249,7 @@ int main(int argc, char **argv)
   {
     int ll;
     size_t global[] = {Ndim*args.wgsize};
-    size_t local[] = {args.wgsize};
+    size_t *local = args.wgsize ? &args.wgsize : NULL;
 
     cl_mem d_xtmp = d_xnew;
     d_xnew = d_xold; // don't copy arrays.
@@ -254,12 +267,13 @@ int main(int argc, char **argv)
 
     // Test convergence
     global[0] = Ndim;
+    local = &conv_wgsize;
     clerr = clEnqueueNDRangeKernel(commands, ko_convergence, 1, NULL, global, local, 0, NULL, NULL);
     check_error(clerr, "Enqueueing convergence kernel");
-    clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, Ndim/args.wgsize*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
+    clerr = clEnqueueReadBuffer(commands, d_conv, CL_TRUE, 0, Ndim/conv_wgsize*sizeof(TYPE), conv_tmp, 0, NULL, NULL);
     check_error(clerr, "Copying back partial convergence array");
     conv = (TYPE) 0.0;
-    for (ll = 0 ; ll < Ndim/args.wgsize; ll++)
+    for (ll = 0 ; ll < Ndim/conv_wgsize; ll++)
       conv += conv_tmp[ll];
     conv = sqrt((double)conv);
 

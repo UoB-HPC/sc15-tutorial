@@ -10,9 +10,9 @@
 
 typedef struct
 {
-  cl_uint n;
-  cl_uint device_index;
-  cl_uint wgsize;
+  size_t n;
+  size_t device_index;
+  size_t wgsize;
 } Arguments;
 
 // Check an OpenCL error code.
@@ -26,10 +26,6 @@ unsigned get_device_list(cl_device_id devices[MAX_DEVICES]);
 // Load a file into a string.
 // Exits program on failure.
 char* get_kernel_string(const char *file_name);
-
-// Parse a string as an unsigned integer.
-// Returns 0 on failure.
-int parse_uint(const char *str, cl_uint *output);
 
 // Parse command-line arguments.
 // args provides default values for each argument, and will receive the final parsed values.
