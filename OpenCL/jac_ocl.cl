@@ -3,24 +3,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 
-
-/*********************************************************
-  THE SERIAL JACOBI KERNEL
-*********************************************************/
-/*
-     for (i=0; i<Ndim; i++){
-         xnew[i] = (TYPE) 0.0;
-         for (j=0; j<Ndim;j++){
-             if(i!=j)
-               xnew[i]+= A[i*Ndim + j]*xold[j];
-         }
-         xnew[i] = (b[i]-xnew[i])/A[i*Ndim+i];
-
-     }
-*/
-/*********************************************************/
-
-
 kernel void jacobi(
   const unsigned Ndim,
   global TYPE * A,
