@@ -113,8 +113,7 @@ int main(int argc, char **argv)
        for (i=0; i<Ndim; i++){
            xnew[i] = (TYPE) 0.0;
            for (j=0; j<Ndim;j++){
-               if(i!=j)
-                 xnew[i]+= A[j*Ndim + i]*xold[j];
+                 xnew[i]+= A[j*Ndim + i]*xold[j] * (TYPE)(i!=j);
            }
            xnew[i] = (b[i]-xnew[i])/A[i*Ndim+i];
 
