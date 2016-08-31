@@ -1,9 +1,9 @@
 # for the Intel compiler (icc) on Apple OS-X
 # copy to make.def
-CC          = icc
+CC          = cc
 CLINKER     = $(CC)
-OPTFLAGS    = -fopenmp -DAPPLE -O3
-LIBS        = -lm
+OPTFLAGS    = -O3
+LIBS        = 
 PRE         = ./
 
 CFLAGS	  = $(OPTFLAGS)
