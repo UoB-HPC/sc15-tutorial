@@ -8,11 +8,14 @@ include ../make.def
 EXES=pi_spmd_final$(EXE) pi_loop$(EXE) pi_targ$(EXE) \
      jac_solv_parfor$(EXE) jac_solv_par_for$(EXE) \
      jac_solv_dat_reg$(EXE) jac_solv_targ$(EXE)  \
+     jac_solve_coal$(EXE) \
      phi_test$(EXE) scope_play$(EXE)
 
 JAC_PAR_FOR_OBJS  = jac_solv_par_for.$(OBJ) mm_utils.$(OBJ) 
 
 JAC_PARFOR_OBJS   = jac_solv_parfor.$(OBJ) mm_utils.$(OBJ) 
+
+JAC_COAL_OBJS  = jac_solv_coal.$(OBJ) mm_utils.$(OBJ) 
 
 JAC_DAT_REG_OBJS  = jac_solv_par_dat_reg.$(OBJ) mm_utils.$(OBJ) 
 
@@ -25,6 +28,9 @@ jac_solv_par_for$(EXE): $(JAC_PAR_FOR_OBJS) mm_utils.h
 
 jac_solv_parfor$(EXE): $(JAC_PARFOR_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv_parfor$(EXE) $(JAC_PARFOR_OBJS) $(LIBS)
+
+jac_solv_coal$(EXE): $(JAC_COAL_OBJS) mm_utils.h
+	$(CLINKER) $(CFLAGS) -o jac_solv_coal$(EXE) $(JAC_COAL_OBJS) $(LIBS)
 
 jac_solv_dat_reg$(EXE): $(JAC_DAT_REG_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv_dat_reg$(EXE) $(JAC_DAT_REG_OBJS) $(LIBS)
