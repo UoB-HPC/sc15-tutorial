@@ -30,3 +30,4 @@ void mm_tst_cases(int NTRIALS, int Ndim, int Mdim, int Pdim, TYPE* A, TYPE* B, T
 void init_diag_dom_matrix(int Ndim,  TYPE *A);
 
 void init_diag_dom_near_identity_matrix(int Ndim,  TYPE *A);
+void init_diag_dom_near_identity_matrix_colmaj(int Ndim,  TYPE *A);
