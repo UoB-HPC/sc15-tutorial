@@ -17,6 +17,8 @@ JAC_PARFOR_OBJS   = jac_solv_parfor.$(OBJ) mm_utils.$(OBJ)
 
 JAC_COAL_OBJS  = jac_solv_coal.$(OBJ) mm_utils.$(OBJ) 
 
+JAC_NOBR_OBJS  = jac_solv_nobr.$(OBJ) mm_utils.$(OBJ) 
+
 JAC_DAT_REG_OBJS  = jac_solv_par_dat_reg.$(OBJ) mm_utils.$(OBJ) 
 
 JAC_DAT_TARG_OBJS = jac_solv_par_target.$(OBJ) mm_utils.$(OBJ) 
@@ -31,6 +33,9 @@ jac_solv_parfor$(EXE): $(JAC_PARFOR_OBJS) mm_utils.h
 
 jac_solv_coal$(EXE): $(JAC_COAL_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv_coal$(EXE) $(JAC_COAL_OBJS) $(LIBS)
+
+jac_solv_nobr$(EXE): $(JAC_NOBR_OBJS) mm_utils.h
+	$(CLINKER) $(CFLAGS) -o jac_solv_nobr$(EXE) $(JAC_NOBR_OBJS) $(LIBS)
 
 jac_solv_dat_reg$(EXE): $(JAC_DAT_REG_OBJS) mm_utils.h
 	$(CLINKER) $(CFLAGS) -o jac_solv_dat_reg$(EXE) $(JAC_DAT_REG_OBJS) $(LIBS)
