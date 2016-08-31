@@ -53,7 +53,7 @@ int main(int argc, char **argv)
    int i,j, iters;
    double start_time, elapsed_time;
    TYPE conv, tmp, err, chksum;
-   TYPE *A, *b, *x1, *x2, *xnew, *xold, *xtmp; 
+   TYPE *A, *b, *x1, *x2, *xnew, *xold;
 
 // set matrix dimensions and allocate memory for matrices
    if(argc ==2){
@@ -98,16 +98,15 @@ int main(int argc, char **argv)
 //
    conv  = LARGE;
    iters = 0;
-   xnew  = x1;
-   xold  = x2;
-   #pragma omp target data map(tofrom:xnew[0:Ndim],xold[0:Ndim],conv) \
+   #pragma omp target data map(tofrom:x1[0:Ndim],x2[0:Ndim],conv) \
                         map(to:A[0:Ndim*Ndim], Ndim, b[0:Ndim])
    while((conv > TOLERANCE) && (iters<MAX_ITERS))
    {
      iters++;
-     xtmp  = xnew;   // don't copy arrays.
-     xnew  = xold;   // just swap pointers.
-     xold  = xtmp;
+
+     // alternate x vectors
+     xnew = iters % 2 ? x2 : x1;
+     xold = iters % 2 ? x1 : x2;
 
      #pragma omp target 
        #pragma omp teams distribute simd private(i,j) 
